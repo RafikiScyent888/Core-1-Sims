@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Device Issue Diagnosis Lab</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-alt: #020617;
+      --card: #0f172a;
+      --card-alt: #111827;
+      --accent: #f97316;
+      --accent-soft: rgba(249, 115, 22, 0.2);
+      --good: #22c55e;
+      --bad: #ef4444;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+      color: var(--text);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .scenario, .instructions {
+      max-width: 980px;
+      margin: 0 auto 8px;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+
+    .instructions {
+      background: linear-gradient(135deg, #0b1120, #111827);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .instructions span.icon {
+      font-size: 20px;
+      margin-top: 1px;
+    }
+
+    .instructions strong {
+      color: var(--accent);
+    }
+
+    .device-grid {
+      max-width: 1150px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .device-card {
+      background: radial-gradient(circle at top, #111827 0, #020617 80%);
+      border-radius: 14px;
+      padding: 12px 14px 14px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease;
+      position: relative;
+    }
+
+    .device-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.7);
+      border-color: var(--accent-soft);
+    }
+
+    .device-card.correct {
+      border-color: var(--good);
+    }
+
+    .device-card.incorrect {
+      border-color: var(--bad);
+    }
+
+    .device-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .device-icon {
+      font-size: 26px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 11px;
+      background: radial-gradient(circle at top, #1d4ed8 0, #020617 75%);
+      border: 1px solid #1d4ed8;
+      flex-shrink: 0;
+    }
+
+    .device-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .click-hint {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .device-details {
+      margin-top: 8px;
+      border-top: 1px dashed #374151;
+      padding-top: 8px;
+      display: none;
+    }
+
+    .device-card.active .device-details {
+      display: block;
+    }
+
+    .symptoms {
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #d1d5db;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-top: 6px;
+      margin-bottom: 2px;
+      font-weight: 600;
+      color: #9ca3af;
+    }
+
+    select {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: var(--text);
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.5);
+    }
+
+    .controls {
+      max-width: 980px;
+      margin: 22px auto 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    button {
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-grade {
+      background: linear-gradient(135deg, var(--accent), #fb923c);
+      color: #111827;
+      box-shadow: 0 8px 16px rgba(249, 115, 22, 0.45);
+    }
+
+    .btn-reset {
+      background: #020617;
+      color: var(--muted);
+      border: 1px solid #4b5563;
+    }
+
+    .btn-grade:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-reset:hover {
+      border-color: #9ca3af;
+      color: #e5e7eb;
+    }
+
+    .footer-note {
+      max-width: 980px;
+      margin: 16px auto 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Results overlay */
+    #result-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    #result-modal {
+      background: #020617;
+      border-radius: 14px;
+      border: 1px solid #4b5563;
+      max-width: 860px;
+      max-height: 80vh;
+      width: 95%;
+      padding: 14px 16px 12px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    #result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 4px;
+      margin-bottom: 4px;
+    }
+
+    #result-header h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    #score-badge {
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid #4b5563;
+      font-size: 12px;
+    }
+
+    #result-body {
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .result-row {
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #020617;
+      border: 1px solid #1f2937;
+    }
+
+    .result-row.correct {
+      border-color: rgba(34, 197, 94, 0.7);
+      background: rgba(22, 163, 74, 0.10);
+    }
+
+    .result-row.incorrect {
+      border-color: rgba(239, 68, 68, 0.8);
+      background: rgba(127, 29, 29, 0.32);
+    }
+
+    .result-row-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .result-row-header span.status {
+      font-size: 12px;
+    }
+
+    .status.correct {
+      color: var(--good);
+    }
+
+    .status.incorrect {
+      color: var(--bad);
+    }
+
+    .result-row p {
+      margin: 1px 0;
+    }
+
+    .result-row p.small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .close-x {
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--muted);
+      padding: 0 6px;
+    }
+
+    .close-x:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <h1>Device Issue Diagnosis Lab</h1>
+
+  <p class="scenario">
+    <strong>Scenario:</strong> A technician is diagnosing several device issues reported by employees throughout
+    the organization. Each device is experiencing a different symptom.
+  </p>
+
+  <div class="instructions">
+    <span class="icon">🛠️</span>
+    <div>
+      <strong>INSTRUCTIONS:</strong> Click on each device card to review the issue description.
+      Then choose the most likely <em>Issue</em> and <em>Solution</em> from the drop-down menus.
+      Each option may be used more than once. When you are finished, click
+      <strong>Grade Lab</strong> to check your work.
+      <br><br>
+      <strong>Scoring:</strong> You earn <strong>1 point</strong> for each device where both the
+      issue and solution are correct (10 points total). Explanations will show what you chose and
+      why the correct answer is the best fit.
+    </div>
+  </div>
+
+  <!-- DEVICE CARDS -->
+  <div class="device-grid">
+    <!-- Device 1 -->
+    <div class="device-card" onclick="toggleDetails(event, 1)">
+      <div class="device-header">
+        <div class="device-icon">📱</div>
+        <div class="device-title">Device 1 – Employee Smartphone</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-1" class="device-details">
+        <p class="symptoms">
+          The user reports that the phone’s battery drops from 100% to under 20% in less than an hour
+          during light use. The device is only slightly warm, and both the charging cable and adapter are
+          known-good.
+        </p>
+        <label for="issue-1">Select an issue:</label>
+        <select id="issue-1">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-1">Select a solution:</label>
+        <select id="solution-1">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 2 -->
+    <div class="device-card" onclick="toggleDetails(event, 2)">
+      <div class="device-header">
+        <div class="device-icon">💻</div>
+        <div class="device-title">Device 2 – Accounting Laptop</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-2" class="device-details">
+        <p class="symptoms">
+          When powered on, the laptop displays a black screen with the message
+          “Operating system not found / cannot locate boot device.” Restarting the device produces
+          the same message every time.
+        </p>
+        <label for="issue-2">Select an issue:</label>
+        <select id="issue-2">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-2">Select a solution:</label>
+        <select id="solution-2">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 3 -->
+    <div class="device-card" onclick="toggleDetails(event, 3)">
+      <div class="device-header">
+        <div class="device-icon">💻</div>
+        <div class="device-title">Device 3 – Developer Laptop</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-3" class="device-details">
+        <p class="symptoms">
+          While compiling code or running virtual machines, the laptop suddenly shuts down.
+          The chassis is very hot to the touch, and the fan is running at full speed right before
+          each shutdown.
+        </p>
+        <label for="issue-3">Select an issue:</label>
+        <select id="issue-3">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-3">Select a solution:</label>
+        <select id="solution-3">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 4 -->
+    <div class="device-card" onclick="toggleDetails(event, 4)">
+      <div class="device-header">
+        <div class="device-icon">💻</div>
+        <div class="device-title">Device 4 – Help Desk Laptop</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-4" class="device-details">
+        <p class="symptoms">
+          Even after closing windows or switching applications, faint outlines of toolbars and
+          text remain visible on the screen. The image appears “stuck” in certain areas, especially
+          along the top and sides of the display.
+        </p>
+        <label for="issue-4">Select an issue:</label>
+        <select id="issue-4">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-4">Select a solution:</label>
+        <select id="solution-4">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 5 -->
+    <div class="device-card" onclick="toggleDetails(event, 5)">
+      <div class="device-header">
+        <div class="device-icon">📱</div>
+        <div class="device-title">Device 5 – Executive Smartphone</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-5" class="device-details">
+        <p class="symptoms">
+          The back cover of the phone no longer sits flush with the case. The screen appears
+          slightly lifted on one side, and the user reports a sweet chemical smell when the device
+          is charging.
+        </p>
+        <label for="issue-5">Select an issue:</label>
+        <select id="issue-5">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-5">Select a solution:</label>
+        <select id="solution-5">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 6 -->
+    <div class="device-card" onclick="toggleDetails(event, 6)">
+      <div class="device-header">
+        <div class="device-icon">🖥️</div>
+        <div class="device-title">Device 6 – Training Room Monitor</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-6" class="device-details">
+        <p class="symptoms">
+          The monitor powers on and briefly shows its logo, then displays “No signal.” The
+          desktop PC is powered on and connected with a known-good cable. When a laptop is
+          connected to the same port, it works only after changing the monitor’s input.
+        </p>
+        <label for="issue-6">Select an issue:</label>
+        <select id="issue-6">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-6">Select a solution:</label>
+        <select id="solution-6">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 7 -->
+    <div class="device-card" onclick="toggleDetails(event, 7)">
+      <div class="device-header">
+        <div class="device-icon">📽️</div>
+        <div class="device-title">Device 7 – Projector (Conference Room A)</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-7" class="device-details">
+        <p class="symptoms">
+          The projected image is wider at the top than at the bottom, making the picture look like
+          a trapezoid instead of a rectangle. The projector is sitting on a cart slightly below the
+          center of the screen.
+        </p>
+        <label for="issue-7">Select an issue:</label>
+        <select id="issue-7">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-7">Select a solution:</label>
+        <select id="solution-7">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 8 -->
+    <div class="device-card" onclick="toggleDetails(event, 8)">
+      <div class="device-header">
+        <div class="device-icon">🖥️</div>
+        <div class="device-title">Device 8 – Design Team Monitor</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-8" class="device-details">
+        <p class="symptoms">
+          Designers report that dark scenes in videos look gray and washed out, while bright areas
+          appear almost completely white. When you open the monitor’s picture menu, the contrast
+          setting is pushed to an extreme value.
+        </p>
+        <label for="issue-8">Select an issue:</label>
+        <select id="issue-8">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-8">Select a solution:</label>
+        <select id="solution-8">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 9 -->
+    <div class="device-card" onclick="toggleDetails(event, 9)">
+      <div class="device-header">
+        <div class="device-icon">🖥️</div>
+        <div class="device-title">Device 9 – Cafeteria Display</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-9" class="device-details">
+        <p class="symptoms">
+          A large wall display is mounted behind a protective glass panel. Text and images look
+          soft and slightly hazy, as if there is a film over the screen. Up close, you can see
+          fingerprints and dust on the glass.
+        </p>
+        <label for="issue-9">Select an issue:</label>
+        <select id="issue-9">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-9">Select a solution:</label>
+        <select id="solution-9">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Device 10 -->
+    <div class="device-card" onclick="toggleDetails(event, 10)">
+      <div class="device-header">
+        <div class="device-icon">🖥️</div>
+        <div class="device-title">Device 10 – Lobby Kiosk PC</div>
+        <span class="click-hint">click to review issue</span>
+      </div>
+      <div id="details-10" class="device-details">
+        <p class="symptoms">
+          The lobby information kiosk no longer boots into Windows. On startup it displays
+          “No bootable device / insert boot media.” In the BIOS, the disk is listed but fails the
+          built-in diagnostics test.
+        </p>
+        <label for="issue-10">Select an issue:</label>
+        <select id="issue-10">
+          <option value="">Select an issue</option>
+          <option>Battery Performance</option>
+          <option>Burn in</option>
+          <option>Cannot locate boot partition</option>
+          <option>Fuzzy image</option>
+          <option>Incorrect contrast settings</option>
+          <option>Keystoning</option>
+          <option>Overheating</option>
+          <option>Swollen Battery</option>
+          <option>Wrong input selected</option>
+        </select>
+
+        <label for="solution-10">Select a solution:</label>
+        <select id="solution-10">
+          <option value="">Select a solution</option>
+          <option>Adjust the refresh rate settings</option>
+          <option>Adjust the display angle settings</option>
+          <option>Clean the lens</option>
+          <option>Disable overclocking in the CPU</option>
+          <option>Enter the BIOS and configure changes</option>
+          <option>A replacement is required</option>
+          <option>Switch the display input</option>
+          <option>upgrade the hard drive</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-reset" onclick="resetLab()">
+      ↺ Reset
+    </button>
+    <button class="btn-grade" onclick="gradeLab()">
+      ✅ Grade Lab
+    </button>
+  </div>
+
+  <p class="footer-note">
+    Use this lab to practice matching real-world symptoms to likely issues and technician actions.
+    On the actual exam, key phrases like “trapezoid image,” “Operating system not found,” or
+    “battery bulging” are strong hints toward specific troubleshooting terms.
+  </p>
+
+  <!-- RESULT OVERLAY -->
+  <div id="result-overlay">
+    <div id="result-modal">
+      <div id="result-header">
+        <h2>Lab Results</h2>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div id="score-badge"></div>
+          <div class="close-x" onclick="closeResults()">×</div>
+        </div>
+      </div>
+      <div id="result-body"></div>
+    </div>
+  </div>
+
+  <script>
+    // Correct answers
+    const correctIssues = {
+      1: "Battery Performance",
+      2: "Cannot locate boot partition",
+      3: "Overheating",
+      4: "Burn in",
+      5: "Swollen Battery",
+      6: "Wrong input selected",
+      7: "Keystoning",
+      8: "Incorrect contrast settings",
+      9: "Fuzzy image",
+      10: "Cannot locate boot partition"
+    };
+
+    const correctSolutions = {
+      1: "A replacement is required",
+      2: "Enter the BIOS and configure changes",
+      3: "Disable overclocking in the CPU",
+      4: "A replacement is required",
+      5: "A replacement is required",
+      6: "Switch the display input",
+      7: "Adjust the display angle settings",
+      8: "Adjust the refresh rate settings",
+      9: "Clean the lens",
+      10: "upgrade the hard drive"
+    };
+
+    // Explanations for each device
+    const explanations = {
+      1: "Rapid battery drain with normal temperatures and a known-good charger points to poor battery performance. In practice this is usually a worn-out battery, so replacement of the battery or device is the appropriate fix.",
+      2: "The message “Operating system not found / cannot locate boot device” indicates that the system is not booting from the correct drive or partition. The first step is to enter the BIOS and correct the boot order or boot partition configuration.",
+      3: "Unexpected shutdowns under heavy CPU load with a very hot chassis are classic overheating symptoms. If the CPU has been overclocked, returning it to stock speeds (or disabling overclocking) reduces heat output and prevents thermal shutdowns.",
+      4: "Persistent ghost images that remain even after switching applications are a sign of burn-in (image retention). This damage is permanent, so adjusting settings will not fully solve the problem. The affected display must be replaced.",
+      5: "A case that no longer closes properly, a lifted screen, and unusual smells strongly suggest a swollen battery. Swollen batteries are dangerous and should not be used; the only safe solution is to replace the battery or device.",
+      6: "A monitor that powers on but shows 'No signal' until you change which connector it listens to is typically on the wrong input. Switching the display input to the port the PC is actually using restores the video signal.",
+      7: "A trapezoid-shaped picture that is wider at one edge is called keystoning. It happens when the projector is not square to the screen. Adjusting the projector’s angle or keystone settings corrects the distortion.",
+      8: "Washed-out dark scenes and blown-out highlights with an extreme contrast value in the menu point to incorrect contrast settings. The fix is to go into the monitor’s advanced display settings and adjust the picture controls (represented here by adjusting refresh/display settings).",
+      9: "Soft, hazy images on a display behind glass with visible fingerprints and dust indicate that the image is being blurred before it reaches the viewer. Cleaning the glass or lens surface removes the film and restores a sharp image, resolving the fuzzy image issue.",
+      10: "A kiosk that reports 'No bootable device' while the disk fails diagnostics indicates that the boot partition is on a failing drive. In this case, simply changing BIOS settings is not enough—replacing or upgrading the hard drive is required."
+    };
+
+    function toggleDetails(event, id) {
+      const tag = event.target.tagName.toLowerCase();
+      if (tag === "select" || tag === "option" || tag === "label") return;
+      const card = event.currentTarget;
+      card.classList.toggle("active");
+    }
+
+    function gradeLab() {
+      let score = 0;
+      const total = 10;
+      const resultBody = document.getElementById("result-body");
+      resultBody.innerHTML = "";
+
+      for (let i = 1; i <= total; i++) {
+        const issueSel = document.getElementById(`issue-${i}`);
+        const solSel = document.getElementById(`solution-${i}`);
+        const issueVal = issueSel.value;
+        const solVal = solSel.value;
+
+        const issueCorrect = issueVal === correctIssues[i];
+        const solCorrect = solVal === correctSolutions[i];
+        const deviceCorrect = issueCorrect && solCorrect;
+
+        if (deviceCorrect) score++;
+
+        const card = issueSel.closest(".device-card");
+        card.classList.remove("correct", "incorrect");
+        card.classList.add(deviceCorrect ? "correct" : "incorrect");
+
+        const row = document.createElement("div");
+        row.className = "result-row " + (deviceCorrect ? "correct" : "incorrect");
+
+        const header = document.createElement("div");
+        header.className = "result-row-header";
+        header.innerHTML = `
+          <span>Device ${i}</span>
+          <span class="status ${deviceCorrect ? "correct" : "incorrect"}">
+            ${deviceCorrect ? "✔ Correct (+1)" : "✖ Incorrect"}
+          </span>
+        `;
+        row.appendChild(header);
+
+        const chosenText = document.createElement("p");
+        chosenText.innerHTML =
+          `<strong>Your answer:</strong> Issue = <em>${issueVal || "No selection"}</em>, ` +
+          `Solution = <em>${solVal || "No selection"}</em>`;
+        row.appendChild(chosenText);
+
+        const correctText = document.createElement("p");
+        correctText.innerHTML =
+          `<strong>Correct:</strong> Issue = <em>${correctIssues[i]}</em>, ` +
+          `Solution = <em>${correctSolutions[i]}</em>`;
+        row.appendChild(correctText);
+
+        const expl = document.createElement("p");
+        expl.className = "small";
+        expl.textContent = explanations[i];
+        row.appendChild(expl);
+
+        resultBody.appendChild(row);
+      }
+
+      const scoreBadge = document.getElementById("score-badge");
+      scoreBadge.textContent = `Score: ${score} / 10 points`;
+      document.getElementById("result-overlay").style.display = "flex";
+    }
+
+    function closeResults() {
+      document.getElementById("result-overlay").style.display = "none";
+    }
+
+    function resetLab() {
+      for (let i = 1; i <= 10; i++) {
+        document.getElementById(`issue-${i}`).value = "";
+        document.getElementById(`solution-${i}`).value = "";
+        const card = document.getElementById(`issue-${i}`).closest(".device-card");
+        card.classList.remove("correct", "incorrect");
+      }
+      closeResults();
+    }
+  </script>
+</body>
+</html>

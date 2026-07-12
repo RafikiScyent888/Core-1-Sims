@@ -66,7 +66,11 @@ h1 {
 /* Components */
 .components label {
   display:block;
-  margin:6px 0;
+  margin:4px 0;
+  padding:8px 4px;
+  min-height:40px;
+  box-sizing:border-box;
+  cursor:pointer;
 }
 
 .result {
@@ -83,6 +87,15 @@ h1 {
   border-left:4px solid #6c7ae0;
   font-size:13px;
   background:#f8f9ff;
+}
+
+@media (max-width: 600px) {
+  .container { margin: 12px auto; padding: 0 12px; }
+  h1 { font-size: 19px; }
+  .issue-layout {
+    grid-template-columns: 1fr;
+  }
+  .issue-card { padding: 12px; }
 }
 </style>
 </head>

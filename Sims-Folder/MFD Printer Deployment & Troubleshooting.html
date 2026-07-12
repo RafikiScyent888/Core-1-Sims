@@ -71,17 +71,18 @@ h1{margin:0 0 6px;font-size:22px}
 select option{background:#0f1736;color:#ffffff;}
 
 .toggle{
-  width:48px;height:26px;border-radius:999px;
+  width:60px;height:34px;border-radius:999px;
   border:1px solid var(--border);
   background:rgba(255,255,255,.15);
   position:relative;cursor:pointer;
+  touch-action:manipulation;
 }
 .toggle span{
-  width:22px;height:22px;background:var(--accent);
-  border-radius:50%;position:absolute;top:1px;left:1px;
+  width:28px;height:28px;background:var(--accent);
+  border-radius:50%;position:absolute;top:2px;left:2px;
   transition:.2s;
 }
-.toggle.on span{left:24px;background:var(--good)}
+.toggle.on span{left:30px;background:var(--good)}
 
 main{
   max-width:1150px;
@@ -189,6 +190,15 @@ button.secondary{background:rgba(255,255,255,.12)}
   line-height:1.5;
 }
 .kv strong{color:var(--text)}
+
+@media (max-width:600px){
+  header{padding:18px 14px 10px}
+  h1{font-size:19px}
+  main{padding:0 14px 24px}
+  .cardBody{padding:12px}
+  .cardHeader{padding:12px 14px}
+  button{padding:9px 14px;font-size:14px}
+}
 </style>
 </head>
 

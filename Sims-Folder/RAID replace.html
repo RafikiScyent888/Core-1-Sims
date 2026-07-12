@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RAID Troubleshooting Challenge</title>
 
 <style>
@@ -17,6 +18,7 @@ h2 { color: #2a4d69; }
 
 #layout-container {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 40px;
   align-items: flex-start;
@@ -31,7 +33,8 @@ h2 { color: #2a4d69; }
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  width: 220px;
+  max-width: 220px;
+  width: 100%;
   justify-content: center;
 
  background-color: #880808; /* ocean blue */
@@ -50,6 +53,7 @@ h2 { color: #2a4d69; }
   font-weight: bold;
   cursor: pointer;
   position: relative;
+  touch-action: none;
 }
 
 .drive span {
@@ -67,9 +71,21 @@ h2 { color: #2a4d69; }
   position: absolute;
   top: 2px;
   right: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
+  touch-action: manipulation;
+}
+
+.server-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 #server-container {
@@ -138,7 +154,16 @@ button {
   padding: 20px;
   z-index: 999;
   max-width: 400px;
+  width: 90%;
+  box-sizing: border-box;
   white-space: pre-wrap;
+}
+
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  #layout-container { padding: 10px; gap: 16px; }
+  .drive { width: 140px; font-size: 11px; }
+  button { padding: 10px 16px; font-size: 14px; }
 }
 </style>
 </head>
@@ -154,7 +179,9 @@ Click each drive to review logs. Remove failed drives and replace with matching 
 
 <div id="layout-container">
   <div id="spare-wrapper"></div>
-  <div id="server-container"></div>
+  <div class="server-scroll">
+    <div id="server-container"></div>
+  </div>
 </div>
 
 <div>
@@ -239,12 +266,9 @@ function init() {
     bay.ondragover = e => e.preventDefault();
     bay.ondrop = function(e) {
       e.preventDefault();
-      if (!bay.classList.contains("empty")) return;
       const id = e.dataTransfer.getData("text");
       const spare = document.getElementById(id);
-      bay.appendChild(spare);
-      bay.classList.remove("empty");
-      bay.classList.add("replaced");
+      placeSpareInBay(bay, spare);
     };
 
     document.getElementById("server-container").appendChild(bay);
@@ -255,6 +279,79 @@ function init() {
   });
 
   generateSpares();
+}
+
+function placeSpareInBay(bay, spare) {
+  if (!bay || !spare) return false;
+  if (!bay.classList.contains("empty")) return false;
+  bay.appendChild(spare);
+  bay.classList.remove("empty");
+  bay.classList.add("replaced");
+  return true;
+}
+
+/* Touch (mobile) drag-and-drop support, mirrors the HTML5 DnD logic above */
+let touchDragEl = null;
+let touchDragOffsetX = 0;
+let touchDragOffsetY = 0;
+let touchDragOriginParent = null;
+let touchDragOriginNextSibling = null;
+
+function handleSpareTouchStart(e) {
+  const touch = e.touches[0];
+  const spare = e.currentTarget;
+  touchDragEl = spare;
+  touchDragOriginParent = spare.parentElement;
+  touchDragOriginNextSibling = spare.nextSibling;
+
+  const rect = spare.getBoundingClientRect();
+  touchDragOffsetX = touch.clientX - rect.left;
+  touchDragOffsetY = touch.clientY - rect.top;
+
+  spare.style.position = "fixed";
+  spare.style.zIndex = "1000";
+  spare.style.width = rect.width + "px";
+  spare.style.left = rect.left + "px";
+  spare.style.top = rect.top + "px";
+}
+
+function handleSpareTouchMove(e) {
+  if (!touchDragEl) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  touchDragEl.style.left = (touch.clientX - touchDragOffsetX) + "px";
+  touchDragEl.style.top = (touch.clientY - touchDragOffsetY) + "px";
+}
+
+function handleSpareTouchEnd(e) {
+  if (!touchDragEl) return;
+  const touch = e.changedTouches[0];
+  const spare = touchDragEl;
+
+  spare.style.pointerEvents = "none";
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  spare.style.pointerEvents = "";
+
+  spare.style.position = "";
+  spare.style.zIndex = "";
+  spare.style.width = "";
+  spare.style.left = "";
+  spare.style.top = "";
+
+  const bay = target ? target.closest(".bay") : null;
+  const placed = bay ? placeSpareInBay(bay, spare) : false;
+
+  if (!placed) {
+    if (touchDragOriginNextSibling) {
+      touchDragOriginParent.insertBefore(spare, touchDragOriginNextSibling);
+    } else {
+      touchDragOriginParent.appendChild(spare);
+    }
+  }
+
+  touchDragEl = null;
+  touchDragOriginParent = null;
+  touchDragOriginNextSibling = null;
 }
 
 function generateSpares() {
@@ -304,6 +401,11 @@ function createSpare(cap, spd, type, idSuffix) {
   `;
 
   spare.ondragstart = e => e.dataTransfer.setData("text", spare.id);
+
+  spare.addEventListener("touchstart", handleSpareTouchStart, { passive: false });
+  spare.addEventListener("touchmove", handleSpareTouchMove, { passive: false });
+  spare.addEventListener("touchend", handleSpareTouchEnd);
+
   return spare;
 }
 

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WAP Installation Simulation</title>
   <style>
     body {
@@ -22,14 +23,17 @@
 
     .container {
       display: flex;
+      flex-wrap: wrap;
       height: calc(100vh - 80px);
     }
 
     .sidebar {
       width: 300px;
+      max-width: 100%;
       background: #2c3e50;
       color: white;
       padding: 20px;
+      box-sizing: border-box;
       overflow-y: auto;
     }
 
@@ -87,10 +91,12 @@
       border: 1px solid #ccc;
       background: white;
       cursor: grab;
+      touch-action: none;
     }
 
     .drag-area {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 40px;
       margin: 40px 0;
@@ -125,6 +131,8 @@
     }
 
     .center-image img {
+      max-width: 100%;
+      height: auto;
       max-height: 300px;
       margin-top: 30px;
     }
@@ -134,6 +142,11 @@
       height: 150px;
     }
 
+    .network-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
     .network-layout {
       display: flex;
       flex-direction: column;
@@ -141,6 +154,7 @@
       gap: 100px;
       margin-top: 75px;
       position: relative;
+      min-width: 1000px;
     }
 
     .network-row {
@@ -233,6 +247,30 @@
     .dialog-box h3 {
       margin-top: 0;
     }
+
+    @media (max-width: 800px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+      .sidebar {
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header.title-header {
+        font-size: 18px;
+        padding: 14px 0;
+      }
+      .sidebar {
+        padding: 12px;
+      }
+      .tab-content {
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -292,26 +330,28 @@
         <div class="image-box"><img src="wires.png" draggable="true"><label>Wires</label></div>
       </div>
 
-      <div class="network-layout" id="networkLayout">
-        <svg class="link-lines" id="linkLines"></svg>
-        <div class="network-row">
-          <div class="device-stack">
-            <div class="drop-zone" id="pp-left" data-answer="RJ45"></div>
-            <div class="device-box"><img src="Patchpanel.png" alt="Patch Panel"></div>
+      <div class="network-scroll">
+        <div class="network-layout" id="networkLayout">
+          <svg class="link-lines" id="linkLines"></svg>
+          <div class="network-row">
+            <div class="device-stack">
+              <div class="drop-zone" id="pp-left" data-answer="RJ45"></div>
+              <div class="device-box"><img src="Patchpanel.png" alt="Patch Panel"></div>
+            </div>
+            <div class="device-stack">
+              <div class="device-box"><img src="Patchpanelback.png" alt="Patch Panel Back"></div>
+              <div class="drop-zone" id="ppb-right" data-answer="Wires"></div>
+            </div>
           </div>
-          <div class="device-stack">
-            <div class="device-box"><img src="Patchpanelback.png" alt="Patch Panel Back"></div>
-            <div class="drop-zone" id="ppb-right" data-answer="Wires"></div>
-          </div>
-        </div>
-        <div class="network-row">
-          <div class="device-stack">
-            <div class="drop-zone" id="sw-left" data-answer="RJ45"></div>
-            <div class="device-box"><img src="Switch.png" alt="Switch"></div>
-          </div>
-          <div class="device-stack">
-            <div class="device-box"><img src="Accesspoint.png" alt="Access Point" class="accesspoint-img"></div>
-            <div class="drop-zone" id="ap-right" data-answer="RJ45"></div>
+          <div class="network-row">
+            <div class="device-stack">
+              <div class="drop-zone" id="sw-left" data-answer="RJ45"></div>
+              <div class="device-box"><img src="Switch.png" alt="Switch"></div>
+            </div>
+            <div class="device-stack">
+              <div class="device-box"><img src="Accesspoint.png" alt="Access Point" class="accesspoint-img"></div>
+              <div class="drop-zone" id="ap-right" data-answer="RJ45"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -386,11 +426,45 @@
     });
   }
 
+  // Shared drop handling used by both the native HTML5 drag-and-drop
+  // 'drop' event and the touch-based reimplementation below (native
+  // HTML5 DnD does not work on mobile touch browsers).
+  function handleDrop(zone, imgId) {
+    const img = document.getElementById(imgId);
+    if (img) {
+      const clone = img.cloneNode(true);
+      clone.draggable = false;
+      clone.style.cursor = 'default';
+      zone.innerHTML = '';
+      zone.appendChild(clone);
+      drawLines();
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    let touchDragId = null;
+
     document.querySelectorAll('.image-box img').forEach((img, i) => {
       img.id = `drag-${i}`;
       img.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', e.target.id);
+      });
+
+      img.addEventListener('touchstart', () => {
+        touchDragId = img.id;
+      }, { passive: true });
+      img.addEventListener('touchmove', e => {
+        e.preventDefault();
+      }, { passive: false });
+      img.addEventListener('touchend', e => {
+        if (!touchDragId) return;
+        const touch = e.changedTouches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        const zone = target ? target.closest('.drop-zone') : null;
+        if (zone) {
+          handleDrop(zone, touchDragId);
+        }
+        touchDragId = null;
       });
     });
 
@@ -398,15 +472,7 @@
       zone.addEventListener('dragover', e => e.preventDefault());
       zone.addEventListener('drop', e => {
         e.preventDefault();
-        const img = document.getElementById(e.dataTransfer.getData('text/plain'));
-        if (img) {
-          const clone = img.cloneNode(true);
-          clone.draggable = false;
-          clone.style.cursor = 'default';
-          zone.innerHTML = '';
-          zone.appendChild(clone);
-          drawLines();
-        }
+        handleDrop(zone, e.dataTransfer.getData('text/plain'));
       });
     });
   });

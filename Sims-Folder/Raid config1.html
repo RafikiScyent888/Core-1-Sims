@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RAID Configuration Challenge</title>
 
 <style>
@@ -22,12 +23,14 @@ h2 { color: #2a4d69; }
 
 #layout-container {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 50px;
   align-items: flex-start;
   margin-bottom: 20px;
   background-color: red; /* layout container red */
   padding: 20px;
+  box-sizing: border-box;
 }
 
 /* baby blue interpretation */
@@ -43,15 +46,18 @@ h2 { color: #2a4d69; }
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  width: 220px;
+  max-width: 220px;
+  width: 100%;
   justify-content: center;
   border: 2px dashed #bbb;
   padding: 10px;
   min-height: 100px;
+  box-sizing: border-box;
 }
 
 .drive {
   width: 170px;
+  max-width: 100%;
   height: 55px;
   background: hotpink; /* bright pink */
   border: 2px solid #888;
@@ -66,14 +72,18 @@ h2 { color: #2a4d69; }
   font-weight: bold;
   color: #222;
   cursor: grab;
+  touch-action: none;
+  box-sizing: border-box;
 }
 
 #server-container {
-  width: 500px;
+  max-width: 500px;
+  width: 100%;
   background: #0096FF; /* bright blue */
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  box-sizing: border-box;
 }
 
 .server-title {
@@ -90,7 +100,8 @@ h2 { color: #2a4d69; }
 
 .bay {
   height: 50px;
-  width: 100px;
+  width: 100%;
+  min-height: 40px;
   display: flex;
   align-itmes: center;
   border: 2px dashed rgba(255,255,255,0.4);
@@ -101,10 +112,12 @@ h2 { color: #2a4d69; }
   align-items: center;
   color: #000;
   font-size: 12px;
+  box-sizing: border-box;
 }
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 15px;
   margin-top: 15px;
@@ -112,12 +125,14 @@ h2 { color: #2a4d69; }
 
 button {
   padding: 8px 16px;
+  min-height: 40px;
   background-color: #1a73e8;
   border: none;
   border-radius: 5px;
   color: white;
   font-size: 14px;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 button:hover { background-color: #145cb3; }
@@ -126,6 +141,35 @@ button:hover { background-color: #145cb3; }
   font-weight: bold;
   margin-top: 15px;
   color: #333;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 12px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  #layout-container {
+    gap: 20px;
+    padding: 12px;
+  }
+
+  #server-container {
+    padding: 12px;
+  }
+
+  .bay-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .bay-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>
 </head>
@@ -166,6 +210,23 @@ Drag SSDs into the server bays to satisfy the customer's requirements.
 const speeds = ["400MB/s", "550MB/s", "600MB/s"];
 const sizes = [1, 2];
 
+// Shared touch-drag state (used by the touchstart/touchmove/touchend
+// handlers below, since native HTML5 drag-and-drop does not fire on
+// mobile touch screens).
+let touchDragEl = null;
+let touchOffsetX = 0;
+let touchOffsetY = 0;
+
+// Shared drop-handling logic used by both the mouse-based HTML5 "drop"
+// event and the touch-based reimplementation.
+function placeDriveInBay(bay, drive) {
+  if (!bay || !drive) return;
+  if (!bay.querySelector(".drive")) {
+    bay.innerHTML = "";
+    bay.appendChild(drive);
+  }
+}
+
 function resetAll() {
   generateDrives();
   clearBays();
@@ -193,6 +254,46 @@ function generateDrives() {
       e.dataTransfer.setData("text/plain", div.id)
     );
 
+    // Touch support: HTML5 drag-and-drop doesn't work on mobile, so
+    // reimplement dragging with touch events, reusing placeDriveInBay().
+    div.addEventListener("touchstart", e => {
+      touchDragEl = div;
+      const t = e.touches[0];
+      const rect = div.getBoundingClientRect();
+      touchOffsetX = t.clientX - rect.left;
+      touchOffsetY = t.clientY - rect.top;
+    }, { passive: true });
+
+    div.addEventListener("touchmove", e => {
+      if (!touchDragEl) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      touchDragEl.style.position = "fixed";
+      touchDragEl.style.zIndex = "1000";
+      touchDragEl.style.left = (t.clientX - touchOffsetX) + "px";
+      touchDragEl.style.top = (t.clientY - touchOffsetY) + "px";
+      touchDragEl.style.pointerEvents = "none";
+    }, { passive: false });
+
+    div.addEventListener("touchend", e => {
+      if (!touchDragEl) return;
+      const dragged = touchDragEl;
+      const t = e.changedTouches[0];
+
+      dragged.style.position = "";
+      dragged.style.zIndex = "";
+      dragged.style.left = "";
+      dragged.style.top = "";
+      dragged.style.pointerEvents = "";
+
+      const dropTarget = document.elementFromPoint(t.clientX, t.clientY);
+      const bay = dropTarget ? dropTarget.closest(".bay") : null;
+      if (bay) {
+        placeDriveInBay(bay, dragged);
+      }
+      touchDragEl = null;
+    });
+
     wrapper.appendChild(div);
   }
 }
@@ -206,11 +307,7 @@ function clearBays() {
       e.preventDefault();
       const id = e.dataTransfer.getData("text/plain");
       const drive = document.getElementById(id);
-
-      if (!bay.querySelector(".drive")) {
-        bay.innerHTML = "";
-        bay.appendChild(drive);
-      }
+      placeDriveInBay(bay, drive);
     });
 
     bay.addEventListener("click", () => {

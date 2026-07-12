@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RAID Configuration Challenge</title>
   <style>
     body {
@@ -15,6 +16,7 @@
     .instructions { color: #555; margin-bottom: 20px; }
     #layout-container {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 40px;
       align-items: flex-start;
@@ -44,11 +46,21 @@
       color: #222;
       cursor: grab;
       position: relative;
+      touch-action: none;
+      user-select: none;
     }
     .drive span { line-height: 1.2; }
+    /* The server diagram is a fixed-size board with absolutely-positioned
+       bays aligned to a background image, so it can't reflow to fit a
+       phone screen. Instead it scrolls horizontally within its wrapper. */
+    #server-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+    }
     #server-container {
       position: relative;
       width: 600px;
+      min-width: 600px;
       height: 600px;
       background-image: url('RAID_server.png');
       background-size: cover;
@@ -79,10 +91,18 @@
       cursor: pointer;
     }
     button:hover { background-color: #145cb3; }
+    button { min-height: 40px; }
     #scoreboard, #customer-desc {
       font-weight: bold;
       margin-top: 10px;
       color: #333;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      h2 { font-size: 20px; }
+      .instructions { font-size: 14px; }
+      #layout-container { gap: 16px; }
     }
   </style>
 </head>
@@ -95,17 +115,19 @@
   <div id="layout-container">
     <div id="drive-wrapper" class="drives"></div>
 
-    <div id="server-container">
-      <div class="bay" id="bay1" style="top: 90px; left: 80px;"></div>
-      <div class="bay" id="bay2" style="top: 90px; left: 320px;"></div>
-      <div class="bay" id="bay3" style="top: 170px; left: 80px;"></div>
-      <div class="bay" id="bay4" style="top: 170px; left: 320px;"></div>
-      <div class="bay" id="bay5" style="top: 260px; left: 80px;"></div>
-      <div class="bay" id="bay6" style="top: 260px; left: 320px;"></div>
-      <div class="bay" id="bay7" style="top: 345px; left: 80px;"></div>
-      <div class="bay" id="bay8" style="top: 345px; left: 320px;"></div>
-      <div class="bay" id="bay9" style="top: 428px; left: 80px;"></div>
-      <div class="bay" id="bay10" style="top: 428px; left: 320px;"></div>
+    <div id="server-scroll">
+      <div id="server-container">
+        <div class="bay" id="bay1" style="top: 90px; left: 80px;"></div>
+        <div class="bay" id="bay2" style="top: 90px; left: 320px;"></div>
+        <div class="bay" id="bay3" style="top: 170px; left: 80px;"></div>
+        <div class="bay" id="bay4" style="top: 170px; left: 320px;"></div>
+        <div class="bay" id="bay5" style="top: 260px; left: 80px;"></div>
+        <div class="bay" id="bay6" style="top: 260px; left: 320px;"></div>
+        <div class="bay" id="bay7" style="top: 345px; left: 80px;"></div>
+        <div class="bay" id="bay8" style="top: 345px; left: 320px;"></div>
+        <div class="bay" id="bay9" style="top: 428px; left: 80px;"></div>
+        <div class="bay" id="bay10" style="top: 428px; left: 320px;"></div>
+      </div>
     </div>
   </div>
 
@@ -246,8 +268,19 @@
         div.dataset.speed = d.spd;
         div.innerHTML = `<span>SSD ${idx + 1}</span><span>${d.cap}TB</span><span>${d.spd}</span>`;
         div.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", d.id));
+        initTouchDrag(div);
         wrapper.appendChild(div);
       });
+    }
+
+    // Shared drop logic used by both the HTML5 drag-and-drop "drop" handler
+    // and the touch-based drag handler (HTML5 DnD does not work on touch).
+    function placeDriveInBay(bay, driveId) {
+      const drive = document.getElementById(driveId);
+      if (drive && !bay.hasChildNodes()) {
+        drive.style.position = "static";
+        bay.appendChild(drive);
+      }
     }
 
     function clearBays() {
@@ -258,16 +291,60 @@
         bay.addEventListener("drop", e => {
           e.preventDefault();
           const id = e.dataTransfer.getData("text/plain");
-          const drive = document.getElementById(id);
-          if (!bay.hasChildNodes()) {
-            drive.style.position = "static";
-            bay.appendChild(drive);
-          }
+          placeDriveInBay(bay, id);
         });
         bay.addEventListener("click", () => {
           if (bay.firstChild) document.getElementById("drive-wrapper").appendChild(bay.firstChild);
         });
       }
+    }
+
+    // --- Touch support (HTML5 drag-and-drop does not work on mobile touch) ---
+    let touchDragEl = null;
+    let touchOffsetX = 0;
+    let touchOffsetY = 0;
+
+    function initTouchDrag(drive) {
+      drive.addEventListener("touchstart", function (ev) {
+        touchDragEl = drive;
+        const touch = ev.touches[0];
+        const rect = drive.getBoundingClientRect();
+        touchOffsetX = touch.clientX - rect.left;
+        touchOffsetY = touch.clientY - rect.top;
+        drive.style.position = "fixed";
+        drive.style.zIndex = "1000";
+        drive.style.width = rect.width + "px";
+        drive.style.left = rect.left + "px";
+        drive.style.top = rect.top + "px";
+        drive.style.pointerEvents = "none";
+      }, { passive: true });
+
+      drive.addEventListener("touchmove", function (ev) {
+        if (!touchDragEl) return;
+        ev.preventDefault();
+        const touch = ev.touches[0];
+        touchDragEl.style.left = (touch.clientX - touchOffsetX) + "px";
+        touchDragEl.style.top = (touch.clientY - touchOffsetY) + "px";
+      }, { passive: false });
+
+      drive.addEventListener("touchend", function (ev) {
+        if (!touchDragEl) return;
+        const touch = ev.changedTouches[0];
+        const dragged = touchDragEl;
+        dragged.style.pointerEvents = "";
+        dragged.style.zIndex = "";
+        dragged.style.width = "";
+        dragged.style.left = "";
+        dragged.style.top = "";
+        dragged.style.position = "";
+
+        const dropEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        const bay = dropEl ? dropEl.closest(".bay") : null;
+        if (bay) {
+          placeDriveInBay(bay, dragged.id);
+        }
+        touchDragEl = null;
+      });
     }
 
     function submitConfiguration() {

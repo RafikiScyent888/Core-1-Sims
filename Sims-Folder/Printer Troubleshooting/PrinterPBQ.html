@@ -13,6 +13,12 @@
     h2 {
       text-align: center;
     }
+    .diagram-scroll {
+      overflow-x: auto;
+      max-width: 100%;
+      margin: 20px 0;
+      -webkit-overflow-scrolling: touch;
+    }
     #diagram {
       position: relative;
       background-image: url("printer.png");
@@ -20,7 +26,8 @@
       background-repeat: no-repeat;
       width: 800px;
       height: 500px;
-      margin: 20px auto;
+      min-width: 800px;
+      margin: 0 auto;
       border: 2px solid #333;
     }
     .dropzone {
@@ -42,6 +49,12 @@
       border-radius: 5px;
       cursor: move;
       display: inline-block;
+      touch-action: none;
+    }
+    button {
+      padding: 10px 18px;
+      font-size: 15px;
+      cursor: pointer;
     }
     #labels {
       text-align: center;
@@ -65,6 +78,11 @@
       border-color: red;
       background-color: rgba(255, 0, 0, 0.2);
     }
+
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      #result { padding: 12px; font-size: 14px; }
+    }
   </style>
 </head>
 <body>
@@ -78,11 +96,13 @@
     <div class="draggable" draggable="true" id="Ink Cartridge">Ink Cartridge</div>
   </div>
 
-  <div id="diagram">
-    <div class="dropzone" id="zone1" style="top: 67px; left: 240px;"></div>
-    <div class="dropzone" id="zone2" style="top: 215px; left: 240px;"></div>
-    <div class="dropzone" id="zone3" style="top: 271px; left: 50px;"></div>
-    <div class="dropzone" id="zone4" style="top: 385px; left: 50px;"></div>
+  <div class="diagram-scroll">
+    <div id="diagram">
+      <div class="dropzone" id="zone1" style="top: 67px; left: 240px;"></div>
+      <div class="dropzone" id="zone2" style="top: 215px; left: 240px;"></div>
+      <div class="dropzone" id="zone3" style="top: 271px; left: 50px;"></div>
+      <div class="dropzone" id="zone4" style="top: 385px; left: 50px;"></div>
+    </div>
   </div>
 
   <div style="text-align:center;">
@@ -95,6 +115,17 @@
     const draggables = document.querySelectorAll('.draggable');
     const dropzones = document.querySelectorAll('.dropzone');
     const labelContainer = document.getElementById('labels');
+
+    function dropElementInZone(zone, element) {
+      if (!zone || !element) return;
+
+      if (zone.children.length > 0) {
+        labelContainer.appendChild(zone.firstChild);
+      }
+
+      zone.innerHTML = '';
+      zone.appendChild(element);
+    }
 
     draggables.forEach(draggable => {
       draggable.addEventListener('dragstart', e => {
@@ -110,14 +141,72 @@
         e.preventDefault();
         const data = e.dataTransfer.getData('text/plain');
         const element = document.getElementById(data);
+        dropElementInZone(zone, element);
+      });
+    });
 
-      
-        if (zone.children.length > 0) {
-          labelContainer.appendChild(zone.firstChild);
+    /* Touch (mobile) support: native HTML5 drag-and-drop does not fire on
+       touch devices, so re-implement dragging using touch events + the
+       shared dropElementInZone() logic used by the desktop 'drop' handler. */
+    let touchDragEl = null;
+    let touchDragOffsetX = 0;
+    let touchDragOffsetY = 0;
+    let touchDragOriginParent = null;
+    let touchDragOriginNextSibling = null;
+
+    draggables.forEach(draggable => {
+      draggable.addEventListener('touchstart', e => {
+        const touch = e.touches[0];
+        touchDragEl = draggable;
+        touchDragOriginParent = draggable.parentElement;
+        touchDragOriginNextSibling = draggable.nextSibling;
+
+        const rect = draggable.getBoundingClientRect();
+        touchDragOffsetX = touch.clientX - rect.left;
+        touchDragOffsetY = touch.clientY - rect.top;
+
+        draggable.style.position = 'fixed';
+        draggable.style.zIndex = '1000';
+        draggable.style.width = rect.width + 'px';
+        draggable.style.left = rect.left + 'px';
+        draggable.style.top = rect.top + 'px';
+      }, { passive: false });
+
+      draggable.addEventListener('touchmove', e => {
+        if (!touchDragEl) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchDragEl.style.left = (touch.clientX - touchDragOffsetX) + 'px';
+        touchDragEl.style.top = (touch.clientY - touchDragOffsetY) + 'px';
+      }, { passive: false });
+
+      draggable.addEventListener('touchend', e => {
+        if (!touchDragEl) return;
+        const touch = e.changedTouches[0];
+        const el = touchDragEl;
+
+        el.style.pointerEvents = 'none';
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        el.style.pointerEvents = '';
+
+        el.style.position = '';
+        el.style.zIndex = '';
+        el.style.width = '';
+        el.style.left = '';
+        el.style.top = '';
+
+        const zone = target ? target.closest('.dropzone') : null;
+        if (zone) {
+          dropElementInZone(zone, el);
+        } else if (touchDragOriginNextSibling) {
+          touchDragOriginParent.insertBefore(el, touchDragOriginNextSibling);
+        } else {
+          touchDragOriginParent.appendChild(el);
         }
 
-        zone.innerHTML = '';
-        zone.appendChild(element);
+        touchDragEl = null;
+        touchDragOriginParent = null;
+        touchDragOriginNextSibling = null;
       });
     });
 

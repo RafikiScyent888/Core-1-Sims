@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gaming PC Diagnostic Simulator</title>
   <style>
     body {
@@ -30,6 +31,7 @@
 
     .main-container {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       align-items: flex-start;
       padding: 30px 20px;
@@ -51,12 +53,14 @@
       font-weight: bold;
       cursor: pointer;
       min-width: 180px;
+      min-height: 40px;
       text-align: left;
       display: flex;
       align-items: center;
       gap: 10px;
       font-size: 14px;
       transition: background 0.2s;
+      touch-action: manipulation;
     }
 
     .clickable-button:hover {
@@ -65,13 +69,17 @@
 
     .image-wrapper {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
       position: relative;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .image-wrapper img {
       max-width: 500px;
+      width: 100%;
       height: auto;
       display: block;
     }
@@ -85,6 +93,7 @@
 
     .slideout {
       width: 300px;
+      max-width: 85vw;
       background: #fff;
       border-right: 2px solid #ccc;
       position: fixed;
@@ -92,6 +101,7 @@
       left: -300px;
       height: 100%;
       padding: 20px;
+      box-sizing: border-box;
       transition: left 0.3s;
       overflow-y: auto;
       z-index: 999;
@@ -110,6 +120,7 @@
       color: white;
       border: none;
       padding: 8px 12px;
+      min-height: 40px;
       cursor: pointer;
     }
 
@@ -122,6 +133,14 @@
       padding: 10px;
       margin: 10px;
       width: 250px;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+
+    .controls select,
+    .controls button {
+      width: 100%;
+      max-width: 250px;
     }
 
     #resultDialog {
@@ -135,6 +154,11 @@
       border: 2px solid #333;
       border-radius: 10px;
       z-index: 1000;
+      width: 90vw;
+      max-width: 420px;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-sizing: border-box;
     }
 
     #resultDialog h3 {
@@ -155,6 +179,8 @@
       border-radius: 8px;
       padding: 20px;
       width: 300px;
+      max-width: 90vw;
+      box-sizing: border-box;
     }
 
     .bios-screen {
@@ -163,6 +189,15 @@
       font-family: monospace;
       padding: 15px;
       font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .header { padding: 10px; }
+      .header h1 { font-size: 19px; }
+      .header p { font-size: 13px; }
+      .main-container { padding: 20px 12px; gap: 20px; }
+      .clickable-button { min-width: 140px; font-size: 13px; padding: 10px 12px; }
+      .bios-button { margin-left: 0; margin-top: 12px; }
     }
   </style>
 </head>
@@ -195,7 +230,7 @@
   </div>
 
   <div class="image-wrapper">
-    <img src="PC_Image.png" alt="PC Image" />
+    <img src="PC_Image1.png" alt="PC Image" />
     <div class="bios-button">
       <button class="clickable-button" onclick="showBios()">🧾 BIOS</button>
     </div>

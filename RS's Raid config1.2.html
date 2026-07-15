@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RAID Configuration Challenge</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #2f6fdb; /* main sim background: blue */
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  color: #10233f;
+  box-sizing: border-box;
+}
+
+h2 { color: #ffffff; margin-bottom: 6px; }
+
+.instructions {
+  color: #eaf1ff;
+  margin-bottom: 12px;
+}
+
+.disclaimer {
+  max-width: 640px;
+  margin: 0 auto 20px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #b8c4d6;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #33404f;
+  text-align: left;
+  box-sizing: border-box;
+}
+.disclaimer strong { color: #10233f; }
+
+#controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#tierSelect, #raidSelect {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#raid-reference {
+  max-width: 640px;
+  margin: 0 auto 16px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #b8c4d6;
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+#raid-reference table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: #33404f;
+}
+#raid-reference th, #raid-reference td {
+  text-align: left;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+#raid-reference th { color: #5b6675; font-weight: 700; }
+#raid-reference tr.active { background: #dde8f3; font-weight: 700; color: #10233f; }
+
+#customer-desc {
+  max-width: 640px;
+  margin: 0 auto 16px;
+  font-weight: bold;
+  color: #ffffff;
+  font-size: 13px;
+}
+#customer-desc b { color: #ffe27a; }
+
+#layout-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  background-color: #e07b1a; /* mat area under everything: orange */
+  padding: 20px;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+#drive-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 220px;
+  width: 100%;
+  justify-content: center;
+  background-color: #e8d61f; /* drive holding area: yellow */
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  min-height: 100px;
+  box-sizing: border-box;
+}
+
+.drive {
+  width: 170px;
+  max-width: 100%;
+  min-height: 55px;
+  background: linear-gradient(to bottom, #e35a5a, #c73737); /* drives: red */
+  border: 2px solid #7a1f1f;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 6px 10px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  cursor: grab;
+  touch-action: none;
+  box-sizing: border-box;
+}
+
+#server-container {
+  max-width: 500px;
+  width: 100%;
+  background: #111417; /* server drive-bay unit (outer case): black */
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  box-sizing: border-box;
+}
+
+.server-title {
+  color: white;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.bay-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.bay {
+  height: 50px;
+  width: 100%;
+  min-height: 40px;
+  border: 2px dashed #1f7a35;
+  background-color: #2fae4e; /* individual bay slots: green */
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #eafff0;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+button {
+  padding: 8px 16px;
+  min-height: 40px;
+  background-color: #1a73e8;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+button.secondary { background-color: #5b6675; }
+
+button:hover { background-color: #145cb3; }
+button.secondary:hover { background-color: #48515e; }
+
+#scoreboard {
+  font-weight: bold;
+  margin-top: 15px;
+  color: #ffffff;
+}
+
+#report {
+  max-width: 640px;
+  margin: 12px auto 0;
+  text-align: left;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: none;
+  box-sizing: border-box;
+}
+#report.visible { display: block; }
+#report ul { margin: 0; padding-left: 18px; font-size: 13px; }
+#report li { margin-bottom: 4px; }
+#report li.ok { color: #1e7a44; }
+#report li.bad { color: #a83a3a; }
+
+@media (max-width: 600px) {
+  body {
+    padding: 12px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  #layout-container {
+    gap: 20px;
+    padding: 12px;
+  }
+
+  #server-container {
+    padding: 12px;
+  }
+
+  .bay-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .bay-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h2>RAID Configuration Challenge</h2>
+<div class="instructions">
+Drag drives into the server bays to meet the customer's requirements.
+</div>
+
+<div class="disclaimer">
+  <strong>Educational Use Notice:</strong> This is a training simulation for educational purposes only. It is not a real RAID array, storage system, or hardware deployment procedure.
+</div>
+
+<div id="controls-bar">
+  <label for="tierSelect" style="color:#eaf1ff;font-size:13px;">Customer size:</label>
+  <select id="tierSelect" onchange="startScenario()">
+    <option value="small">Small Business</option>
+    <option value="mid">Mid-Size Business</option>
+    <option value="enterprise">Enterprise</option>
+    <option value="corp">Major Corporation</option>
+  </select>
+
+  <label for="raidSelect" style="color:#eaf1ff;font-size:13px;">RAID type:</label>
+  <select id="raidSelect" onchange="startScenario()">
+    <option value="raid1">RAID 1 — Mirroring</option>
+    <option value="raid5">RAID 5 — Striping + 1 parity</option>
+    <option value="raid6">RAID 6 — Striping + 2 parity</option>
+    <option value="raid10">RAID 10 — Mirrored stripes</option>
+  </select>
+</div>
+
+<div id="raid-reference">
+  <table>
+    <thead>
+      <tr><th>RAID type</th><th>Min disks</th><th>Redundancy</th><th>Usable capacity</th></tr>
+    </thead>
+    <tbody id="raid-reference-body"></tbody>
+  </table>
+</div>
+
+<div id="customer-desc"></div>
+
+<div id="layout-container">
+  <div id="drive-wrapper"></div>
+
+  <div id="server-container">
+    <div class="server-title">SERVER DRIVE BAYS</div>
+    <div class="bay-grid" id="bay-grid"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button onclick="startScenario()">New Customer</button>
+  <button class="secondary" onclick="resetCurrent()">Reset</button>
+  <button onclick="submitConfiguration()">Submit Configuration</button>
+</div>
+
+<div id="scoreboard"></div>
+<div id="report"></div>
+
+<script>
+/* Fixed catalog of 12 distinct disk models, split into 4 tiers of 3
+   (low to high spec), mirroring the RAID replace.html catalog. */
+const CATALOG = [
+  { cap: 1, speed: 400, type: "HDD" },
+  { cap: 1, speed: 520, type: "HDD" },
+  { cap: 1, speed: 550, type: "SSD" },
+  { cap: 2, speed: 400, type: "HDD" },
+  { cap: 2, speed: 520, type: "HDD" },
+  { cap: 2, speed: 550, type: "SSD" },
+  { cap: 2, speed: 600, type: "SSD" },
+  { cap: 2, speed: 600, type: "NVMe" },
+  { cap: 4, speed: 520, type: "HDD" },
+  { cap: 4, speed: 550, type: "SSD" },
+  { cap: 4, speed: 600, type: "SSD" },
+  { cap: 4, speed: 600, type: "NVMe" },
+];
+
+const TIERS = {
+  small:      { label: "Small Business",    minDrives: 2, reqIndexes: [0, 1, 2] },
+  mid:        { label: "Mid-Size Business", minDrives: 3, reqIndexes: [3, 4, 5] },
+  enterprise: { label: "Enterprise",        minDrives: 5, reqIndexes: [6, 7, 8] },
+  corp:       { label: "Major Corporation", minDrives: 6, reqIndexes: [9, 10, 11] },
+};
+
+/* Real RAID mechanics, not just labels:
+   - RAID 1 / RAID 10 are mirrored: drives must be installed in pairs of
+     EQUAL capacity (a mismatched pair wastes the difference), and the
+     tier's minDrives becomes the number of mirrored pairs needed.
+   - RAID 5 / RAID 6 are parity-based: minDrives is the usable count, and
+     parityDisks more physical drives are required on top of that.
+   Every hardFloor matches the real minimum-disk count for that level. */
+const RAID_TYPES = {
+  raid1:  { name: "RAID 1",  subtitle: "Mirroring",            mirrored: true,  parityDisks: 0, hardFloor: 2, redundancy: "Full mirror",         usable: "50%" },
+  raid5:  { name: "RAID 5",  subtitle: "Striping + 1 parity",  mirrored: false, parityDisks: 1, hardFloor: 3, redundancy: "1 disk failure",       usable: "(n-1)/n" },
+  raid6:  { name: "RAID 6",  subtitle: "Striping + 2 parity",  mirrored: false, parityDisks: 2, hardFloor: 4, redundancy: "2 disk failures",      usable: "(n-2)/n" },
+  raid10: { name: "RAID 10", subtitle: "Mirrored stripes",     mirrored: true,  parityDisks: 0, hardFloor: 4, redundancy: "1 per mirror pair",    usable: "50%" },
+};
+
+const BAY_COUNT = 24;
+const DRIVE_COUNT = 20;
+
+let currentScenario = null;
+
+function shuffled(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/* A drive qualifies for the customer's requirement if it meets or exceeds
+   both capacity and speed. Drive type (HDD/SSD/NVMe) never matters. */
+function meetsOrExceeds(drive, requirement) {
+  return drive.cap >= requirement.cap && drive.speed >= requirement.speed;
+}
+
+function requiredCounts(tier, raidType) {
+  if (raidType.mirrored) {
+    const pairsNeeded = tier.minDrives;
+    const total = Math.max(pairsNeeded * 2, raidType.hardFloor);
+    return { requiredTotal: total, pairsNeeded: Math.floor(total / 2) };
+  }
+  const total = Math.max(tier.minDrives + raidType.parityDisks, raidType.hardFloor);
+  return { requiredTotal: total, pairsNeeded: 0 };
+}
+
+function buildScenario(tierKey, raidKey) {
+  const tier = TIERS[tierKey];
+  const raidType = RAID_TYPES[raidKey];
+  const requirement = CATALOG[tier.reqIndexes[Math.floor(Math.random() * tier.reqIndexes.length)]];
+  const { requiredTotal, pairsNeeded } = requiredCounts(tier, raidType);
+  const qualifyingCatalog = CATALOG.filter(d => meetsOrExceeds(d, requirement));
+
+  /* Guarantee the scenario is solvable: seed enough qualifying drives
+     (matched pairs for mirrored types) into the pool, then fill the rest
+     of the pool with random draws as distractors. */
+  const guaranteed = [];
+  if (raidType.mirrored) {
+    for (let p = 0; p < pairsNeeded; p++) {
+      const pick = qualifyingCatalog[Math.floor(Math.random() * qualifyingCatalog.length)];
+      guaranteed.push(pick, pick);
+    }
+  } else {
+    for (let i = 0; i < requiredTotal; i++) {
+      guaranteed.push(qualifyingCatalog[Math.floor(Math.random() * qualifyingCatalog.length)]);
+    }
+  }
+  const fillerCount = Math.max(0, DRIVE_COUNT - guaranteed.length);
+  const filler = Array.from({ length: fillerCount }, () => CATALOG[Math.floor(Math.random() * CATALOG.length)]);
+  const drives = shuffled(guaranteed.concat(filler)).slice(0, DRIVE_COUNT);
+
+  return { tierKey, raidKey, tier, raidType, requirement, requiredTotal, pairsNeeded, drives };
+}
+
+function renderRaidReference(activeKey) {
+  const body = document.getElementById("raid-reference-body");
+  body.innerHTML = Object.entries(RAID_TYPES).map(([key, t]) => `
+    <tr class="${key === activeKey ? 'active' : ''}">
+      <td>${t.name}</td><td>${t.hardFloor}</td><td>${t.redundancy}</td><td>${t.usable}</td>
+    </tr>
+  `).join("");
+}
+
+function startScenario() {
+  const tierKey = document.getElementById("tierSelect").value;
+  const raidKey = document.getElementById("raidSelect").value;
+  currentScenario = buildScenario(tierKey, raidKey);
+  render(currentScenario);
+}
+
+function resetCurrent() {
+  if (!currentScenario) return;
+  render(currentScenario);
+}
+
+function render(scenario) {
+  document.getElementById("tierSelect").value = scenario.tierKey;
+  document.getElementById("raidSelect").value = scenario.raidKey;
+  document.getElementById("scoreboard").textContent = "";
+  document.getElementById("report").className = "";
+  document.getElementById("report").innerHTML = "";
+  renderRaidReference(scenario.raidKey);
+
+  const { tier, raidType, requirement, requiredTotal, pairsNeeded } = scenario;
+  document.getElementById("customer-desc").innerHTML = raidType.mirrored
+    ? `<b>${tier.label}</b> wants <b>${raidType.name}</b> (${raidType.subtitle}): ${pairsNeeded} mirrored pair(s) — ${requiredTotal} drives total — each at least ${requirement.cap}TB / ${requirement.speed}MB/s. Both drives in a pair must share the same capacity, or the mismatch is wasted (drive type doesn't matter).`
+    : `<b>${tier.label}</b> wants <b>${raidType.name}</b> (${raidType.subtitle}): ${requiredTotal} drives total (${tier.minDrives} usable + ${raidType.parityDisks} for parity), each at least ${requirement.cap}TB / ${requirement.speed}MB/s (drive type doesn't matter).`;
+
+  const bayGrid = document.getElementById("bay-grid");
+  bayGrid.innerHTML = "";
+  for (let i = 1; i <= BAY_COUNT; i++) {
+    const bay = document.createElement("div");
+    bay.className = "bay";
+    bay.id = "bay" + i;
+    bay.textContent = "Bay " + i;
+
+    bay.addEventListener("dragover", e => e.preventDefault());
+    bay.addEventListener("drop", e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text/plain");
+      const drive = document.getElementById(id);
+      placeDriveInBay(bay, drive);
+    });
+    bay.addEventListener("click", () => {
+      if (bay.firstChild && bay.firstChild.classList?.contains("drive")) {
+        document.getElementById("drive-wrapper").appendChild(bay.firstChild);
+        bay.innerHTML = "";
+        bay.textContent = bay.id.replace("bay", "Bay ");
+      }
+    });
+
+    bayGrid.appendChild(bay);
+  }
+
+  const wrapper = document.getElementById("drive-wrapper");
+  wrapper.innerHTML = "";
+  scenario.drives.forEach((disk, i) => wrapper.appendChild(createDrive(disk, i)));
+}
+
+/* Shared drop-handling logic used by both the mouse-based HTML5 "drop"
+   event and the touch-based reimplementation. */
+function placeDriveInBay(bay, drive) {
+  if (!bay || !drive) return;
+  if (!bay.querySelector(".drive")) {
+    bay.innerHTML = "";
+    bay.appendChild(drive);
+  }
+}
+
+/* Shared touch-drag state, since native HTML5 drag-and-drop does not
+   fire on mobile touch screens. */
+let touchDragEl = null;
+let touchOffsetX = 0;
+let touchOffsetY = 0;
+
+function createDrive(disk, index) {
+  const div = document.createElement("div");
+  div.className = "drive";
+  div.id = "drive" + index;
+  div.draggable = true;
+  div.dataset.capacity = disk.cap;
+  div.dataset.speed = disk.speed;
+  div.dataset.type = disk.type;
+
+  div.innerHTML = `Drive ${index + 1}<br>${disk.cap}TB<br>${disk.speed}MB/s<br>${disk.type}`;
+
+  div.addEventListener("dragstart", e =>
+    e.dataTransfer.setData("text/plain", div.id)
+  );
+
+  div.addEventListener("touchstart", e => {
+    touchDragEl = div;
+    const t = e.touches[0];
+    const rect = div.getBoundingClientRect();
+    touchOffsetX = t.clientX - rect.left;
+    touchOffsetY = t.clientY - rect.top;
+  }, { passive: true });
+
+  div.addEventListener("touchmove", e => {
+    if (!touchDragEl) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    touchDragEl.style.position = "fixed";
+    touchDragEl.style.zIndex = "1000";
+    touchDragEl.style.left = (t.clientX - touchOffsetX) + "px";
+    touchDragEl.style.top = (t.clientY - touchOffsetY) + "px";
+    touchDragEl.style.pointerEvents = "none";
+  }, { passive: false });
+
+  div.addEventListener("touchend", e => {
+    if (!touchDragEl) return;
+    const dragged = touchDragEl;
+    const t = e.changedTouches[0];
+
+    dragged.style.position = "";
+    dragged.style.zIndex = "";
+    dragged.style.left = "";
+    dragged.style.top = "";
+    dragged.style.pointerEvents = "";
+
+    const dropTarget = document.elementFromPoint(t.clientX, t.clientY);
+    const bay = dropTarget ? dropTarget.closest(".bay") : null;
+    if (bay) {
+      placeDriveInBay(bay, dragged);
+    }
+    touchDragEl = null;
+  });
+
+  return div;
+}
+
+function submitConfiguration() {
+  if (!currentScenario) return;
+  const { requirement: req, raidType, requiredTotal, pairsNeeded } = currentScenario;
+
+  const filledBays = Array.from(document.querySelectorAll(".bay"))
+    .filter(b => b.querySelector(".drive"));
+
+  const lines = [];
+  const qualifying = [];
+
+  filledBays.forEach(bay => {
+    const drive = bay.querySelector(".drive");
+    const cap = Number(drive.dataset.capacity);
+    const speed = Number(drive.dataset.speed);
+    const shortCap = cap < req.cap;
+    const shortSpeed = speed < req.speed;
+
+    if (!shortCap && !shortSpeed) {
+      qualifying.push({ bayLabel: bay.id.replace("bay", "Bay "), cap, speed });
+      lines.push({ cls: "ok", text: `${bay.id.replace("bay", "Bay ")}: qualifies — ${cap}TB / ${speed}MB/s meets or exceeds the required ${req.cap}TB / ${req.speed}MB/s.` });
+    } else {
+      const reasons = [];
+      if (shortCap) reasons.push(`${cap}TB is below the required ${req.cap}TB`);
+      if (shortSpeed) reasons.push(`${speed}MB/s is slower than the required ${req.speed}MB/s`);
+      lines.push({ cls: "bad", text: `${bay.id.replace("bay", "Bay ")}: does not qualify — ${reasons.join(" and ")}.` });
+    }
+  });
+
+  let valid, summary;
+
+  if (raidType.mirrored) {
+    const byCap = {};
+    qualifying.forEach(d => { (byCap[d.cap] = byCap[d.cap] || []).push(d); });
+    let pairsFormed = 0;
+    let leftover = 0;
+    Object.values(byCap).forEach(arr => {
+      pairsFormed += Math.floor(arr.length / 2);
+      leftover += arr.length % 2;
+    });
+    valid = pairsFormed >= pairsNeeded;
+    summary = valid
+      ? `Valid ${raidType.name} configuration! Formed ${pairsFormed} of the required ${pairsNeeded} mirrored pair(s).`
+      : `Not yet valid: formed ${pairsFormed} of the required ${pairsNeeded} mirrored pair(s).`;
+    if (leftover) summary += ` ${leftover} qualifying drive(s) have no equal-capacity partner to mirror with.`;
+  } else {
+    valid = qualifying.length >= requiredTotal;
+    summary = valid
+      ? `Valid ${raidType.name} configuration! ${qualifying.length} of the required ${requiredTotal} drives installed (${raidType.parityDisks} reserved for parity).`
+      : `Not yet valid: ${qualifying.length} of the required ${requiredTotal} qualifying drives installed (${raidType.parityDisks} of those are reserved for parity).`;
+  }
+
+  document.getElementById("scoreboard").textContent = summary;
+
+  const report = document.getElementById("report");
+  if (lines.length) {
+    report.innerHTML = "<ul>" + lines.map(l => `<li class="${l.cls}">${l.text}</li>`).join("") + "</ul>";
+    report.className = "visible";
+  } else {
+    report.className = "";
+    report.innerHTML = "";
+  }
+}
+
+startScenario();
+</script>
+
+</body>
+</html>

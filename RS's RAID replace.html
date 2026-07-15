@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RAID Troubleshooting Challenge</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #2f6fdb; /* main sim background: blue */
+  padding: 20px;
+  text-align: center;
+  color: #10233f;
+}
+
+h2 { color: #ffffff; margin-bottom: 6px; }
+.instructions { margin-bottom: 12px; color: #eaf1ff; }
+
+.disclaimer {
+  max-width: 640px;
+  margin: 0 auto 20px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #b8c4d6;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #33404f;
+  text-align: left;
+}
+.disclaimer strong { color: #10233f; }
+
+#controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#tierSelect {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#scenario-info {
+  color: #eaf1ff;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+#scenario-info b { color: #ffffff; }
+
+#layout-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+
+  background: #e07b1a; /* mat area under everything: orange */
+  padding: 15px;
+  border-radius: 12px;
+}
+
+#spare-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 220px;
+  width: 100%;
+  justify-content: center;
+
+  background-color: #e8d61f; /* spare-drive holding area: yellow */
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* DRIVES = RED (both healthy and failed; failure is shown via badge/border, not hue) */
+.drive {
+  width: 160px;
+  background: linear-gradient(to bottom, #e35a5a, #c73737);
+  border: 2px solid #7a1f1f;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  touch-action: none;
+}
+
+.drive span {
+  display: block;
+}
+
+/* FAILED DRIVES = same red family, marked with a striped border + badge instead of a new hue */
+.failed-drive {
+  border: 3px dashed #ffe27a !important;
+  box-shadow: 0 0 0 2px #7a1f1f inset;
+}
+.failed-drive::before {
+  content: "⚠ FAILED";
+  position: absolute;
+  top: -10px;
+  left: 6px;
+  background: #7a1f1f;
+  color: #ffe27a;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: .03em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .failed-drive { animation: pulse-failed 1.6s ease-in-out infinite; }
+}
+@keyframes pulse-failed {
+  0%, 100% { box-shadow: 0 0 0 2px #7a1f1f inset; }
+  50% { box-shadow: 0 0 0 2px #ffe27a inset; }
+}
+
+.remove-btn {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#server-container {
+  background: #111417; /* server drive-bay unit (outer case): black */
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 170px);
+  gap: 14px;
+  justify-content: center;
+}
+
+.bay {
+  width: 170px;
+  height: 60px;
+  border: 3px dashed #1f7a35;
+  background: #2fae4e; /* individual bay slots: green */
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bay.empty::after {
+  content: "Drop Drive Here";
+  font-size: 11px;
+  color: #eafff0;
+}
+
+.replaced {
+  border: 2px solid #ffe27a !important;
+}
+.replaced::after { content: none; }
+
+button {
+  padding: 8px 16px;
+  margin: 5px;
+  background-color: #1a73e8;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+button.secondary { background-color: #5b6675; }
+button.danger { background-color: #a83a3a; }
+
+#feedback {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #ffffff;
+}
+
+#report {
+  max-width: 640px;
+  margin: 12px auto 0;
+  text-align: left;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: none;
+}
+#report.visible { display: block; }
+#report ul { margin: 0; padding-left: 18px; font-size: 13px; }
+#report li { margin-bottom: 4px; }
+#report li.ok { color: #1e7a44; }
+#report li.bad { color: #a83a3a; }
+#report li.pending { color: #946200; }
+
+#dialog, #overlay {
+  display: none;
+}
+
+#overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 998;
+}
+
+#dialog {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  z-index: 999;
+  max-width: 400px;
+  width: 90%;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  #layout-container { padding: 10px; gap: 16px; }
+  .drive { width: 140px; font-size: 11px; }
+  button { padding: 10px 16px; font-size: 14px; }
+  #server-container { grid-template-columns: repeat(2, 150px); }
+}
+
+@media (max-width: 400px) {
+  #server-container { grid-template-columns: repeat(1, 160px); }
+}
+</style>
+</head>
+
+<body>
+
+<h2>RAID Troubleshooting Challenge</h2>
+<div class="instructions">
+Click each drive to review logs. Remove failed drives and replace with a spare that matches or exceeds its capacity and speed.
+</div>
+
+<div class="disclaimer">
+  <strong>Educational Use Notice:</strong> This is a training simulation for educational purposes only. It is not a real RAID array, storage system, or hardware replacement procedure.
+</div>
+
+<div id="controls-bar">
+  <label for="tierSelect" style="color:#eaf1ff;font-size:13px;">Organization size:</label>
+  <select id="tierSelect" onchange="startTier(this.value)">
+    <option value="small">Small Business — ~25% failure rate</option>
+    <option value="mid">Mid-Size Business — ~42% failure rate</option>
+    <option value="enterprise">Enterprise — ~58% failure rate</option>
+    <option value="corp">Major Corporation — ~75% failure rate</option>
+  </select>
+</div>
+
+<div id="scenario-info"></div>
+
+<div id="feedback"></div>
+
+<div id="layout-container">
+  <div id="spare-wrapper"></div>
+  <div id="server-container"></div>
+</div>
+
+<div>
+  <button onclick="nextIssue()">Next Issue</button>
+  <button class="secondary" onclick="resetCurrent()">Reset</button>
+  <button onclick="submitChallenge()">Submit</button>
+</div>
+
+<div id="report"></div>
+
+<div id="overlay" onclick="closeDialog()"></div>
+<div id="dialog">
+  <h3>Drive Report</h3>
+  <div id="logContent"></div>
+  <br>
+  <button onclick="closeDialog()">Close</button>
+</div>
+
+<script>
+/* Fixed catalog of 12 distinct disk models, ordered low to high spec. */
+const CATALOG = [
+  { cap: 1, speed: 400, type: "HDD" },
+  { cap: 1, speed: 520, type: "HDD" },
+  { cap: 1, speed: 550, type: "SSD" },
+  { cap: 2, speed: 400, type: "HDD" },
+  { cap: 2, speed: 520, type: "HDD" },
+  { cap: 2, speed: 550, type: "SSD" },
+  { cap: 2, speed: 600, type: "SSD" },
+  { cap: 2, speed: 600, type: "NVMe" },
+  { cap: 4, speed: 520, type: "HDD" },
+  { cap: 4, speed: 550, type: "SSD" },
+  { cap: 4, speed: 600, type: "SSD" },
+  { cap: 4, speed: 600, type: "NVMe" },
+];
+
+const TIERS = {
+  small:      { label: "Small Business",      failurePct: 25, replacements: 2 },
+  mid:        { label: "Mid-Size Business",   failurePct: 42, replacements: 3 },
+  enterprise: { label: "Enterprise",          failurePct: 58, replacements: 5 },
+  corp:       { label: "Major Corporation",   failurePct: 75, replacements: 6 },
+};
+
+let currentScenario = null;
+
+function shuffled(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/* A spare is adequate for an original drive if it meets or exceeds
+   both capacity and speed. Drive type (HDD/SSD/NVMe) never matters. */
+function meetsOrExceeds(spare, original) {
+  return spare.cap >= original.cap && spare.speed >= original.speed;
+}
+
+function buildScenario(tierKey) {
+  const tier = TIERS[tierKey];
+  const bayDisks = shuffled(CATALOG); // one distinct model per bay, 12 bays / 12 models
+  const failedIndexes = new Set(shuffled([...Array(12).keys()]).slice(0, tier.replacements));
+
+  const bays = bayDisks.map((disk, i) => ({
+    index: i + 1,
+    disk,
+    failed: failedIndexes.has(i),
+  }));
+
+  const failedOriginals = bays.filter(b => b.failed).map(b => b.disk);
+
+  const spares = [];
+  failedOriginals.forEach((orig, i) => {
+    const adequate = CATALOG.filter(d => meetsOrExceeds(d, orig));
+    const pick = adequate[Math.floor(Math.random() * adequate.length)];
+    spares.push({ id: "match" + i, disk: pick });
+  });
+
+  // Two decoys that fall short of every currently-failed original.
+  let decoyCount = 0;
+  let guard = 0;
+  while (decoyCount < 2 && guard < 50) {
+    guard++;
+    const candidate = CATALOG[Math.floor(Math.random() * CATALOG.length)];
+    const failsAll = failedOriginals.every(orig => !meetsOrExceeds(candidate, orig));
+    if (failsAll) {
+      spares.push({ id: "decoy" + decoyCount, disk: candidate });
+      decoyCount++;
+    }
+  }
+
+  return { tierKey, tier, bays, spares: shuffled(spares) };
+}
+
+function startTier(tierKey) {
+  currentScenario = buildScenario(tierKey);
+  render(currentScenario);
+}
+
+function nextIssue() {
+  const tierKey = document.getElementById("tierSelect").value;
+  currentScenario = buildScenario(tierKey);
+  render(currentScenario);
+}
+
+function resetCurrent() {
+  if (!currentScenario) return;
+  render(currentScenario);
+}
+
+function render(scenario) {
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("report").className = "";
+  document.getElementById("report").innerHTML = "";
+  document.getElementById("tierSelect").value = scenario.tierKey;
+  document.getElementById("scenario-info").innerHTML =
+    `<b>${scenario.tier.label}</b> — approx. ${scenario.tier.failurePct}% drive failure rate — ${scenario.tier.replacements} drive(s) need replacing`;
+
+  const serverContainer = document.getElementById("server-container");
+  const spareWrapper = document.getElementById("spare-wrapper");
+  serverContainer.innerHTML = "";
+  spareWrapper.innerHTML = "";
+
+  scenario.bays.forEach(b => {
+    const bay = document.createElement("div");
+    bay.className = "bay";
+    bay.id = "bay" + b.index;
+    bay.dataset.origCapacity = b.disk.cap;
+    bay.dataset.origSpeed = b.disk.speed;
+    bay.dataset.origType = b.disk.type;
+
+    const drive = document.createElement("div");
+    drive.className = "drive";
+    drive.dataset.capacity = b.disk.cap;
+    drive.dataset.speed = b.disk.speed;
+    drive.dataset.type = b.disk.type;
+    drive.dataset.failed = b.failed;
+
+    drive.innerHTML = `
+      <span>Drive ${b.index}</span>
+      <span>${b.disk.cap}TB</span>
+      <span>${b.disk.speed}MB/s</span>
+      <span>${b.disk.type}</span>
+    `;
+
+    if (b.failed) {
+      drive.classList.add("failed-drive");
+      const removeBtn = document.createElement("div");
+      removeBtn.className = "remove-btn";
+      removeBtn.innerText = "✖";
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        bay.innerHTML = "";
+        bay.classList.add("empty");
+      };
+      drive.appendChild(removeBtn);
+    }
+
+    drive.onclick = () => showLog(drive);
+    bay.appendChild(drive);
+
+    bay.ondragover = e => e.preventDefault();
+    bay.ondrop = function(e) {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text");
+      const spare = document.getElementById(id);
+      placeSpareInBay(bay, spare);
+    };
+
+    serverContainer.appendChild(bay);
+  });
+
+  document.querySelectorAll(".bay").forEach(b => {
+    if (!b.firstChild) b.classList.add("empty");
+  });
+
+  scenario.spares.forEach(sp => {
+    const spare = createSpare(sp.disk, sp.id);
+    spareWrapper.appendChild(spare);
+  });
+}
+
+function placeSpareInBay(bay, spare) {
+  if (!bay || !spare) return false;
+  if (!bay.classList.contains("empty")) return false;
+  bay.appendChild(spare);
+  bay.classList.remove("empty");
+  bay.classList.add("replaced");
+  return true;
+}
+
+/* Touch (mobile) drag-and-drop support, mirrors the HTML5 DnD logic above */
+let touchDragEl = null;
+let touchDragOffsetX = 0;
+let touchDragOffsetY = 0;
+let touchDragOriginParent = null;
+let touchDragOriginNextSibling = null;
+
+function handleSpareTouchStart(e) {
+  const touch = e.touches[0];
+  const spare = e.currentTarget;
+  touchDragEl = spare;
+  touchDragOriginParent = spare.parentElement;
+  touchDragOriginNextSibling = spare.nextSibling;
+
+  const rect = spare.getBoundingClientRect();
+  touchDragOffsetX = touch.clientX - rect.left;
+  touchDragOffsetY = touch.clientY - rect.top;
+
+  spare.style.position = "fixed";
+  spare.style.zIndex = "1000";
+  spare.style.width = rect.width + "px";
+  spare.style.left = rect.left + "px";
+  spare.style.top = rect.top + "px";
+}
+
+function handleSpareTouchMove(e) {
+  if (!touchDragEl) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  touchDragEl.style.left = (touch.clientX - touchDragOffsetX) + "px";
+  touchDragEl.style.top = (touch.clientY - touchDragOffsetY) + "px";
+}
+
+function handleSpareTouchEnd(e) {
+  if (!touchDragEl) return;
+  const touch = e.changedTouches[0];
+  const spare = touchDragEl;
+
+  spare.style.pointerEvents = "none";
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  spare.style.pointerEvents = "";
+
+  spare.style.position = "";
+  spare.style.zIndex = "";
+  spare.style.width = "";
+  spare.style.left = "";
+  spare.style.top = "";
+
+  const bay = target ? target.closest(".bay") : null;
+  const placed = bay ? placeSpareInBay(bay, spare) : false;
+
+  if (!placed) {
+    if (touchDragOriginNextSibling) {
+      touchDragOriginParent.insertBefore(spare, touchDragOriginNextSibling);
+    } else {
+      touchDragOriginParent.appendChild(spare);
+    }
+  }
+
+  touchDragEl = null;
+  touchDragOriginParent = null;
+  touchDragOriginNextSibling = null;
+}
+
+function createSpare(disk, idSuffix) {
+  const spare = document.createElement("div");
+  spare.className = "drive";
+  spare.id = "spare_" + idSuffix;
+  spare.draggable = true;
+  spare.dataset.capacity = disk.cap;
+  spare.dataset.speed = disk.speed;
+  spare.dataset.type = disk.type;
+
+  spare.innerHTML = `
+    <span>Spare</span>
+    <span>${disk.cap}TB</span>
+    <span>${disk.speed}MB/s</span>
+    <span>${disk.type}</span>
+  `;
+
+  spare.ondragstart = e => e.dataTransfer.setData("text", spare.id);
+
+  spare.addEventListener("touchstart", handleSpareTouchStart, { passive: false });
+  spare.addEventListener("touchmove", handleSpareTouchMove, { passive: false });
+  spare.addEventListener("touchend", handleSpareTouchEnd);
+
+  return spare;
+}
+
+function showLog(drive) {
+  const status = drive.dataset.failed === "true"
+    ? "STATUS: FAILED\nSMART Errors Detected"
+    : "STATUS: HEALTHY";
+
+  document.getElementById("logContent").textContent = status;
+  document.getElementById("overlay").style.display = "block";
+  document.getElementById("dialog").style.display = "block";
+}
+
+function closeDialog() {
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("dialog").style.display = "none";
+}
+
+function submitChallenge() {
+  if (!currentScenario) return;
+
+  const lines = [];
+  let correctCount = 0;
+  const requiredCount = currentScenario.bays.filter(b => b.failed).length;
+
+  currentScenario.bays.forEach(b => {
+    if (!b.failed) return;
+    const bayEl = document.getElementById("bay" + b.index);
+    const installed = bayEl.querySelector(".drive:not(.failed-drive)");
+
+    if (!installed) {
+      lines.push({ cls: "pending", text: `Bay ${b.index}: still failed — no replacement installed yet.` });
+      return;
+    }
+
+    const cap = Number(installed.dataset.capacity);
+    const speed = Number(installed.dataset.speed);
+    const shortCap = cap < b.disk.cap;
+    const shortSpeed = speed < b.disk.speed;
+
+    if (!shortCap && !shortSpeed) {
+      correctCount++;
+      lines.push({ cls: "ok", text: `Bay ${b.index}: correct — ${cap}TB / ${speed}MB/s meets or exceeds the required ${b.disk.cap}TB / ${b.disk.speed}MB/s.` });
+    } else {
+      const reasons = [];
+      if (shortCap) reasons.push(`${cap}TB is below the required ${b.disk.cap}TB`);
+      if (shortSpeed) reasons.push(`${speed}MB/s is slower than the required ${b.disk.speed}MB/s`);
+      lines.push({ cls: "bad", text: `Bay ${b.index}: incorrect — ${reasons.join(" and ")}.` });
+    }
+  });
+
+  const feedback = document.getElementById("feedback");
+  feedback.textContent = correctCount === requiredCount
+    ? "All failed drives replaced correctly!"
+    : `${correctCount} of ${requiredCount} failed drives replaced correctly.`;
+
+  const report = document.getElementById("report");
+  report.innerHTML = "<ul>" + lines.map(l => `<li class="${l.cls}">${l.text}</li>`).join("") + "</ul>";
+  report.className = "visible";
+}
+
+startTier("small");
+</script>
+
+</body>
+</html>

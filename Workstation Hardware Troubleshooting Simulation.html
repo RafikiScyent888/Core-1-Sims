@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>A+ PBQ – Workstation Hardware Troubleshooting</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#eef1f6;
+  margin:0;
+  color:#111;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+h1 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.sub {
+  color:#333;
+  margin-bottom: 20px;
+}
+
+/* Issue cards */
+.issue-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.issue-card {
+  background:#ffffff;
+  border:1px solid #cfd5e0;
+  border-radius:12px;
+  padding:16px;
+}
+
+.issue-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.issue-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.symptoms {
+  background:#f4f6fb;
+  border:1px solid #d4d9e6;
+  border-radius:8px;
+  padding:12px;
+  font-size:14px;
+  white-space: pre-line;
+}
+
+/* Components */
+.components label {
+  display:block;
+  margin:4px 0;
+  padding:8px 4px;
+  min-height:40px;
+  box-sizing:border-box;
+  cursor:pointer;
+}
+
+.result {
+  margin-top:8px;
+  font-weight:bold;
+}
+
+.correct { color:#1a7f37; }
+.incorrect { color:#c62828; }
+
+.explanation {
+  margin-top:6px;
+  padding:8px;
+  border-left:4px solid #6c7ae0;
+  font-size:13px;
+  background:#f8f9ff;
+}
+
+@media (max-width: 600px) {
+  .container { margin: 12px auto; padding: 0 12px; }
+  h1 { font-size: 19px; }
+  .issue-layout {
+    grid-template-columns: 1fr;
+  }
+  .issue-card { padding: 12px; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Workstation Hardware Troubleshooting</h1>
+<p class="sub">
+Review each issue and identify the most likely component involved based on the observed symptoms.
+</p>
+
+<div class="issue-grid">
+
+<!-- ISSUE 1 -->
+<div class="issue-card">
+  <div class="issue-title">Issue 1</div>
+  <div class="issue-layout">
+    <div class="symptoms">
+• System powers on
+• Fans spin
+• No display
+• Repeating beep codes during startup
+    </div>
+    <div class="components">
+      <label><input type="radio" name="i1" value="psu"> Power Supply</label>
+      <label><input type="radio" name="i1" value="ram"> Memory (RAM)</label>
+      <label><input type="radio" name="i1" value="cpu"> CPU / Cooling</label>
+      <label><input type="radio" name="i1" value="mb"> Motherboard</label>
+      <label><input type="radio" name="i1" value="gpu"> Graphics Card</label>
+      <div id="r1" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE 2 -->
+<div class="issue-card">
+  <div class="issue-title">Issue 2</div>
+  <div class="issue-layout">
+    <div class="symptoms">
+• Power button pressed
+• No lights
+• No fans
+• No sound
+    </div>
+    <div class="components">
+      <label><input type="radio" name="i2" value="psu"> Power Supply</label>
+      <label><input type="radio" name="i2" value="ram"> Memory (RAM)</label>
+      <label><input type="radio" name="i2" value="cpu"> CPU / Cooling</label>
+      <label><input type="radio" name="i2" value="mb"> Motherboard</label>
+      <label><input type="radio" name="i2" value="gpu"> Graphics Card</label>
+      <div id="r2" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE 3 -->
+<div class="issue-card">
+  <div class="issue-title">Issue 3</div>
+  <div class="issue-layout">
+    <div class="symptoms">
+• System powers on
+• Fans spin
+• No beep codes
+• Black screen
+    </div>
+    <div class="components">
+      <label><input type="radio" name="i3" value="psu"> Power Supply</label>
+      <label><input type="radio" name="i3" value="ram"> Memory (RAM)</label>
+      <label><input type="radio" name="i3" value="cpu"> CPU / Cooling</label>
+      <label><input type="radio" name="i3" value="mb"> Motherboard</label>
+      <label><input type="radio" name="i3" value="gpu"> Graphics Card</label>
+      <div id="r3" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE 4 -->
+<div class="issue-card">
+  <div class="issue-title">Issue 4</div>
+  <div class="issue-layout">
+    <div class="symptoms">
+• System boots normally
+• Shuts down unexpectedly under load
+• Excessive heat observed
+• Loud fan noise
+• Issue began after performance settings were changed
+    </div>
+    <div class="components">
+      <label><input type="radio" name="i4" value="psu"> Power Supply</label>
+      <label><input type="radio" name="i4" value="ram"> Memory (RAM)</label>
+      <label><input type="radio" name="i4" value="cpu"> CPU / Cooling</label>
+      <label><input type="radio" name="i4" value="mb"> Motherboard</label>
+      <label><input type="radio" name="i4" value="gpu"> Graphics Card</label>
+      <div id="r4" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE 5 -->
+<div class="issue-card">
+  <div class="issue-title">Issue 5</div>
+  <div class="issue-layout">
+    <div class="symptoms">
+• System powers on normally
+• Random restarts or blue screens
+• Stable at idle, crashes during heavy use
+• Issue began after BIOS/UEFI settings were changed
+    </div>
+    <div class="components">
+      <label><input type="radio" name="i5" value="psu"> Power Supply</label>
+      <label><input type="radio" name="i5" value="ram"> Memory (RAM)</label>
+      <label><input type="radio" name="i5" value="cpu"> CPU / Cooling</label>
+      <label><input type="radio" name="i5" value="mb"> Motherboard</label>
+      <label><input type="radio" name="i5" value="gpu"> Graphics Card</label>
+      <div id="r5" class="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE 6 -->
+<div class="issue-card">
+  <div class="issue-title">Issue 6</div>
+  <div class="issue-layout">
+    <div class="symptoms">
+• System powers on
+• Fans spin
+• No display output
+• Monitor and cable confirmed working
+• Issue began after hardware or BIOS changes
+    </div>
+    <div class="components">
+      <label><input type="radio" name="i6" value="psu"> Power Supply</label>
+      <label><input type="radio" name="i6" value="ram"> Memory (RAM)</label>
+      <label><input type="radio" name="i6" value="cpu"> CPU / Cooling</label>
+      <label><input type="radio" name="i6" value="mb"> Motherboard</label>
+      <label><input type="radio" name="i6" value="gpu"> Graphics Card</label>
+      <div id="r6" class="result"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+const answers = {
+  i1: {
+    correct: "ram",
+    explanation: "Repeating POST beep codes with no display commonly indicate a memory detection failure."
+  },
+  i2: {
+    correct: "psu",
+    explanation: "No signs of power at all point to a failed or disconnected power supply."
+  },
+  i3: {
+    correct: "gpu",
+    explanation: "A black screen with successful power-on indicates a video output issue."
+  },
+  i4: {
+    correct: "cpu",
+    explanation: "Thermal shutdowns under load indicate CPU overheating, often caused by cooling limitations or aggressive performance settings."
+  },
+  i5: {
+    correct: "ram",
+    explanation: "Memory instability caused by aggressive configuration profiles can lead to crashes under load even if the system boots normally."
+  },
+  i6: {
+    correct: "gpu",
+    explanation: "Incorrect display configuration can prevent video output, making the graphics subsystem appear nonfunctional."
+  }
+};
+
+document.querySelectorAll("input[type=radio]").forEach(radio => {
+  radio.addEventListener("change", () => {
+    const issue = radio.name;
+    const result = document.getElementById("r" + issue.substring(1));
+    const data = answers[issue];
+
+    if (radio.value === data.correct) {
+      result.innerHTML = `<span class="correct">Correct</span>
+        <div class="explanation">${data.explanation}</div>`;
+    } else {
+      result.innerHTML = `<span class="incorrect">Incorrect</span>
+        <div class="explanation">${data.explanation}</div>`;
+    }
+  });
+});
+</script>
+
+</body>
+</html>

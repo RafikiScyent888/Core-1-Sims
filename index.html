@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Core 1 Sims</title>
+<style>
+  :root {
+    --bg-top: #232a35;
+    --bg-bottom: #171b22;
+    --text-body: #e7ebf1;
+    --text-muted: #aab3c2;
+    --card-shadow: rgba(0, 0, 0, 0.35);
+    --text-on-tile: #1a1a1a;
+
+    --red: #e0605a;
+    --red-dark: #c04641;
+    --green: #57b768;
+    --green-dark: #3f8f4f;
+    --blue: #5a8de0;
+    --blue-dark: #3f6cbf;
+    --yellow: #e6c34d;
+    --yellow-dark: #c7a52f;
+    --orange: #e0923f;
+    --orange-dark: #bf7527;
+    --purple: #9b7fe0;
+    --purple-dark: #7c5fc4;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    color: var(--text-body);
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1.25rem 1.5rem;
+    color: #ffffff;
+  }
+
+  header h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  }
+
+  header p {
+    margin: 0 auto;
+    max-width: 40rem;
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .disclaimer-banner {
+    max-width: 40rem;
+    margin: 1.25rem auto 0;
+    padding: 0.85rem 1.1rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #b8c4d6;
+    border-radius: 0.6rem;
+    color: #33404f;
+    font-size: 0.85rem;
+    text-align: left;
+    line-height: 1.45;
+  }
+
+  .disclaimer-banner strong {
+    color: #10233f;
+  }
+
+  main {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0.5rem 1.25rem 3rem;
+  }
+
+  .tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: 1.25rem;
+  }
+
+  .tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.9rem;
+    padding: 1.25rem;
+    min-height: 8.5rem;
+    text-decoration: none;
+    color: var(--text-on-tile);
+    box-shadow: 0 4px 10px var(--card-shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+
+  /* Cycle 6 colors across the tiles, in DOM order. */
+  .tile-grid .tile:nth-child(6n+1) { background: var(--red);    border-color: var(--red-dark); }
+  .tile-grid .tile:nth-child(6n+2) { background: var(--green);  border-color: var(--green-dark); }
+  .tile-grid .tile:nth-child(6n+3) { background: var(--blue);   border-color: var(--blue-dark); }
+  .tile-grid .tile:nth-child(6n+4) { background: var(--yellow); border-color: var(--yellow-dark); }
+  .tile-grid .tile:nth-child(6n+5) { background: var(--orange); border-color: var(--orange-dark); }
+  .tile-grid .tile:nth-child(6n+6) { background: var(--purple); border-color: var(--purple-dark); }
+
+  .tile:hover,
+  .tile:focus-visible {
+    transform: translateY(-3px);
+    filter: brightness(1.07);
+    box-shadow: 0 8px 16px var(--card-shadow);
+    outline: none;
+  }
+
+  .tile:active {
+    transform: translateY(0);
+  }
+
+  .tile-icon {
+    font-size: 1.9rem;
+    line-height: 1;
+    margin-bottom: 0.6rem;
+  }
+
+  .tile-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+  }
+
+  .tile-desc {
+    font-size: 0.92rem;
+    line-height: 1.4;
+    color: rgba(0, 0, 0, 0.65);
+  }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem 1rem 2.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  footer a {
+    color: #ffffff;
+  }
+
+  footer .disclaimer {
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: #8b96a8;
+  }
+
+  @media (max-width: 600px) {
+    header {
+      padding: 1.75rem 1rem 1rem;
+    }
+
+    main {
+      padding: 0.5rem 0.85rem 2rem;
+    }
+
+    .tile-grid {
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .tile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Core 1 Sims</h1>
+  <p>Hands-on IT support simulations. Pick a tile below to start a lab on any device.</p>
+  <div class="disclaimer-banner">
+    <strong>Educational Use Notice:</strong> These simulations are for educational purposes only. They are not real hardware or software, and are not affiliated with, endorsed by, or a replica of any certification exam or vendor product.
+  </div>
+</header>
+
+<main>
+  <div class="tile-grid">
+    <a class="tile" href="Device Issue Diagnosis.html">
+      <div>
+        <div class="tile-icon">🩺</div>
+        <div class="tile-title">Device Issue Diagnosis</div>
+        <div class="tile-desc">Diagnose common device problems from symptoms.</div>
+      </div>
+    </a>
+    <a class="tile" href="MFD Printer Deployment & Troubleshooting.html">
+      <div>
+        <div class="tile-icon">🖨️</div>
+        <div class="tile-title">MFD Printer Deployment &amp; Troubleshooting</div>
+        <div class="tile-desc">Deploy and troubleshoot a multi-function printer.</div>
+      </div>
+    </a>
+    <a class="tile" href="Mobile Device Troubleshooting Simulation.html">
+      <div>
+        <div class="tile-icon">📱</div>
+        <div class="tile-title">Mobile Device Troubleshooting</div>
+        <div class="tile-desc">Work through mobile device fault scenarios.</div>
+      </div>
+    </a>
+    <a class="tile" href="Power Management.html">
+      <div>
+        <div class="tile-icon">🔌</div>
+        <div class="tile-title">Power Source Drag &amp; Drop</div>
+        <div class="tile-desc">Match power sources to the right equipment.</div>
+      </div>
+    </a>
+    <a class="tile" href="Workstation Build & Compatibility Check Simulation.html">
+      <div>
+        <div class="tile-icon">🖥️</div>
+        <div class="tile-title">Workstation Build &amp; Compatibility Check</div>
+        <div class="tile-desc">Build a workstation and verify part compatibility.</div>
+      </div>
+    </a>
+    <a class="tile" href="Workstation Hardware Troubleshooting Simulation.html">
+      <div>
+        <div class="tile-icon">🔧</div>
+        <div class="tile-title">Workstation Hardware Troubleshooting</div>
+        <div class="tile-desc">Track down faulty hardware on a workstation.</div>
+      </div>
+    </a>
+    <a class="tile" href="PC Builder/PC Builder.html">
+      <div>
+        <div class="tile-icon">🧰</div>
+        <div class="tile-title">PC Builder</div>
+        <div class="tile-desc">Assemble a PC from individual components.</div>
+      </div>
+    </a>
+    <a class="tile" href="PC Diagnostic/PC Diagnostic.html">
+      <div>
+        <div class="tile-icon">🎮</div>
+        <div class="tile-title">Gaming PC Diagnostic</div>
+        <div class="tile-desc">Find and fix issues on a gaming PC build.</div>
+      </div>
+    </a>
+    <a class="tile" href="Printer Troubleshooting/PrinterPBQ.html">
+      <div>
+        <div class="tile-icon">🖨️</div>
+        <div class="tile-title">Printer Component Drag-and-Drop</div>
+        <div class="tile-desc">Identify laser printer components by function.</div>
+      </div>
+    </a>
+    <a class="tile" href="RAID Configuration/RAID Configuration.html">
+      <div>
+        <div class="tile-icon">💾</div>
+        <div class="tile-title">RAID Configuration Challenge</div>
+        <div class="tile-desc">Configure the right RAID level for the scenario.</div>
+      </div>
+    </a>
+    <a class="tile" href="RAID Troubleshooting/RAID Troubleshooting.html">
+      <div>
+        <div class="tile-icon">🛠️</div>
+        <div class="tile-title">RAID Troubleshooting Challenge</div>
+        <div class="tile-desc">Diagnose and repair a failing RAID array.</div>
+      </div>
+    </a>
+    <a class="tile" href="RS's Raid config1.2.html">
+      <div>
+        <div class="tile-icon">🏗️</div>
+        <div class="tile-title">RAID Configuration Challenge (Rebuilt)</div>
+        <div class="tile-desc">Build a RAID 1, 5, 6, or 10 array to spec for customers from small business to major corporation.</div>
+      </div>
+    </a>
+    <a class="tile" href="RS's RAID replace.html">
+      <div>
+        <div class="tile-icon">🔁</div>
+        <div class="tile-title">RAID Troubleshooting Challenge (Rebuilt)</div>
+        <div class="tile-desc">Replace failed drives with a spec-matching spare, scaled from small business to major corporation.</div>
+      </div>
+    </a>
+    <a class="tile" href="WAP Installation/WAP Installation Simulation.html">
+      <div>
+        <div class="tile-icon">📶</div>
+        <div class="tile-title">WAP Installation Simulation</div>
+        <div class="tile-desc">Install and cable a wireless access point.</div>
+      </div>
+    </a>
+  </div>
+</main>
+
+<footer>
+  <p>Core 1 Sims — IT support training simulations.</p>
+  <p class="disclaimer">Disclaimer: These simulations are educational tools only and are not affiliated with, endorsed by, or a replica of any certification exam or vendor product.</p>
+</footer>
+</body>
+</html>

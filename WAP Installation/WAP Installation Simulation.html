@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WAP Installation Simulation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+
+    header.title-header {
+      background-color: #2c3e50;
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+      width: 300px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ddd;
+    }
+
+    .tab-button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #ddd;
+      border: none;
+      font-weight: bold;
+    }
+
+    .tab-button.active {
+      background: #fff;
+      border-bottom: 2px solid #2c3e50;
+    }
+
+    .tab-content {
+      flex: 1;
+      padding: 20px;
+      background: white;
+      display: none;
+      overflow-y: auto;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .image-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .image-box {
+      width: 100px;
+      text-align: center;
+    }
+
+    .image-box img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      background: white;
+      cursor: grab;
+    }
+
+    .drag-area {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 40px 0;
+    }
+
+    .drop-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .drop-label {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .drop-zone {
+      width: 140px;
+      height: 100px;
+      border: 2px dashed #888;
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .drop-zone img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .center-image img {
+      max-height: 300px;
+      margin-top: 30px;
+    }
+
+    .accesspoint-img {
+      width: 100px;
+      height: 150px;
+    }
+
+    .network-layout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 100px;
+      margin-top: 75px;
+      position: relative;
+    }
+
+    .network-row {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .device-stack {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .device-box {
+      position: relative;
+      width: 320px;
+      padding: 10px;
+      background: #eaf2f8;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .device-box img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    svg.link-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    line.animated-link {
+      stroke: orange;
+      stroke-width: 4;
+      stroke-dasharray: 10;
+      animation: dashmove 1.5s linear infinite;
+    }
+
+    @keyframes dashmove {
+      to {
+        stroke-dashoffset: -100;
+      }
+    }
+
+    .controls {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .controls button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .dialog-box {
+      background: white;
+      padding: 20px;
+      max-width: 500px;
+      border-radius: 10px;
+      text-align: left;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    .dialog-box h3 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+<header class="title-header">WAP Installation Simulation</header>
+<div class="container">
+  <div class="sidebar">
+    <h2>SIMULATION</h2>
+    <p>You are tasked with installing a new wireless access point. This includes running cable, creating patch cords as needed, and ensuring proper connectivity.</p>
+    <h2>INSTRUCTIONS</h2>
+    <p><strong>Part 1: Cable Assembly</strong><br>For each type of cable shown, drag and drop the appropriate connector type and tool required to prepare and terminate the cable properly.</p>
+    <p><strong>Part 2: Network Connection</strong><br>The wireless access point was recently relocated and is no longer connected to the network. Establish a connection between the access point, patch panel, and network switch:<br><br>Drag and drop the connectors to the appropriate locations. Once all matching pair is selected (e.g., patch panel to switch), the link will be displayed.<br><br>All placeholders must be filled. Cable ends may be reused multiple times.</p>
+  </div>
+  <div class="main">
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab('part1')">Part 1</button>
+      <button class="tab-button" onclick="switchTab('part2')">Part 2</button>
+    </div>
+
+    <!-- Part 1 -->
+    <div id="part1" class="tab-content active">
+<h3>Connectors & Tools</h3>
+      <div class="image-grid">
+        <div class="image-box"><img src="LC.png" draggable="true"><label>LC</label></div>
+        <div class="image-box"><img src="RJ11.png" draggable="true"><label>RJ11</label></div>
+        <div class="image-box"><img src="RJ45.png" draggable="true"><label>RJ45</label></div>
+        <div class="image-box"><img src="Crimper.png" draggable="true"><label>Crimper</label></div>
+        <div class="image-box"><img src="Opticalcrimper.png" draggable="true"><label>Opticalcrimper</label></div>
+        <div class="image-box"><img src="Punchdown.png" draggable="true"><label>Punchdown</label></div>
+      </div>
+
+      <div class="drag-area">
+        <div class="drop-column">
+          <div class="drop-label">Connectors</div>
+          <div class="drop-zone" data-answer="RJ11"></div>
+          <div class="drop-zone" data-answer="LC"></div>
+          <div class="drop-zone" data-answer="RJ45"></div>
+        </div>
+        <div class="center-image">
+          <img src="cables.png" alt="Cables">
+        </div>
+        <div class="drop-column">
+          <div class="drop-label">Tools</div>
+          <div class="drop-zone" data-answer="Crimper"></div>
+          <div class="drop-zone" data-answer="Opticalcrimper"></div>
+          <div class="drop-zone" data-answer="Crimper"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part 2 -->
+    <div id="part2" class="tab-content">
+<h3>Connectors</h3>
+      <div class="image-grid">
+        <div class="image-box"><img src="LC.png" draggable="true"><label>LC</label></div>
+        <div class="image-box"><img src="RJ11.png" draggable="true"><label>RJ11</label></div>
+        <div class="image-box"><img src="RJ45.png" draggable="true"><label>RJ45</label></div>
+        <div class="image-box"><img src="wires.png" draggable="true"><label>Wires</label></div>
+      </div>
+
+      <div class="network-layout" id="networkLayout">
+        <svg class="link-lines" id="linkLines"></svg>
+        <div class="network-row">
+          <div class="device-stack">
+            <div class="drop-zone" id="pp-left" data-answer="RJ45"></div>
+            <div class="device-box"><img src="Patchpanel.png" alt="Patch Panel"></div>
+          </div>
+          <div class="device-stack">
+            <div class="device-box"><img src="Patchpanelback.png" alt="Patch Panel Back"></div>
+            <div class="drop-zone" id="ppb-right" data-answer="Wires"></div>
+          </div>
+        </div>
+        <div class="network-row">
+          <div class="device-stack">
+            <div class="drop-zone" id="sw-left" data-answer="RJ45"></div>
+            <div class="device-box"><img src="Switch.png" alt="Switch"></div>
+          </div>
+          <div class="device-stack">
+            <div class="device-box"><img src="Accesspoint.png" alt="Access Point" class="accesspoint-img"></div>
+            <div class="drop-zone" id="ap-right" data-answer="RJ45"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button onclick="submitAnswers()">Submit</button>
+      <button onclick="resetAll()">Reset All</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="dialogOverlay">
+  <div class="dialog-box" id="dialogBox">
+    <h3>Results</h3>
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.tab-button[onclick*='${tabId}']`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    drawLines();
+  }
+
+  function resetAll() {
+    document.querySelectorAll('.drop-zone').forEach(zone => zone.innerHTML = '');
+    document.getElementById('linkLines').innerHTML = '';
+    document.getElementById('dialogOverlay').style.display = 'none';
+  }
+
+  function submitAnswers() {
+    let correct = 0, total = 0, feedback = '';
+
+    document.querySelectorAll('.drop-zone[data-answer]').forEach(zone => {
+      const expected = zone.dataset.answer.toLowerCase().replace(/\s/g, '');
+      const actual = zone.querySelector('img')?.src.toLowerCase().replace(/\s/g, '') || '';
+      total++;
+      if (actual.includes(expected)) {
+        correct++;
+      } else {
+        feedback += `<p><strong>Expected:</strong> ${expected.toUpperCase()} — <strong>Found:</strong> ${actual ? actual.split('/').pop() : 'None'}</p>`;
+      }
+    });
+
+    const scoreMessage = `<p><strong>Score:</strong> ${correct} / ${total}</p>`;
+    document.getElementById('resultContent').innerHTML = scoreMessage + feedback;
+    document.getElementById('dialogOverlay').style.display = 'flex';
+  }
+
+  function drawLines() {
+    const svg = document.getElementById('linkLines');
+    svg.innerHTML = '';
+    const pairs = [['pp-left', 'sw-left'], ['ap-right', 'ppb-right']];
+    pairs.forEach(([a, b]) => {
+      const el1 = document.getElementById(a), el2 = document.getElementById(b);
+      if (el1?.children.length && el2?.children.length) {
+        const r1 = el1.getBoundingClientRect(), r2 = el2.getBoundingClientRect(), c = svg.getBoundingClientRect();
+        const x1 = r1.left + r1.width / 2 - c.left;
+        const y1 = r1.top + r1.height / 2 - c.top;
+        const x2 = r2.left + r2.width / 2 - c.left;
+        const y2 = r2.top + r2.height / 2 - c.top;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+        line.classList.add("animated-link");
+        svg.appendChild(line);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.image-box img').forEach((img, i) => {
+      img.id = `drag-${i}`;
+      img.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', e.target.id);
+      });
+    });
+
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.addEventListener('dragover', e => e.preventDefault());
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        const img = document.getElementById(e.dataTransfer.getData('text/plain'));
+        if (img) {
+          const clone = img.cloneNode(true);
+          clone.draggable = false;
+          clone.style.cursor = 'default';
+          zone.innerHTML = '';
+          zone.appendChild(clone);
+          drawLines();
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

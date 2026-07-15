@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gaming PC Diagnostic Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f4f4;
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header p {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #ecf0f1;
+    }
+
+    .main-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 20px;
+      gap: 40px;
+    }
+
+    .button-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .clickable-button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      min-width: 180px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .clickable-button:hover {
+      background: #2980b9;
+    }
+
+    .image-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .image-wrapper img {
+      max-width: 500px;
+      height: auto;
+      display: block;
+    }
+
+    .bios-button {
+      margin-left: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slideout {
+      width: 300px;
+      background: #fff;
+      border-right: 2px solid #ccc;
+      position: fixed;
+      top: 0;
+      left: -300px;
+      height: 100%;
+      padding: 20px;
+      transition: left 0.3s;
+      overflow-y: auto;
+      z-index: 999;
+    }
+
+    .slideout.open {
+      left: 0;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 20px;
+      left: 10px;
+      z-index: 1000;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .controls {
+      padding: 20px;
+      text-align: center;
+    }
+
+    select, button {
+      padding: 10px;
+      margin: 10px;
+      width: 250px;
+    }
+
+    #resultDialog {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -20%);
+      background: white;
+      padding: 20px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      z-index: 1000;
+    }
+
+    #resultDialog h3 {
+      margin-top: 0;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+
+    dialog {
+      border: none;
+      border-radius: 8px;
+      padding: 20px;
+      width: 300px;
+    }
+
+    .bios-screen {
+      background: black;
+      color: lime;
+      font-family: monospace;
+      padding: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Gaming PC Diagnostic Simulator</h1>
+  <p>Click on each component to view the specification.<br>
+     Select the appropriate cause and resolution for the issue.<br>
+     If at any time you would like to bring back the initial state of the simulation, please click the Reset All button.
+  </p>
+</div>
+
+<button class="toggle-btn" onclick="toggleSlideout()">☰ Scenario</button>
+
+<div class="slideout" id="slideout">
+  <h3>Scenario</h3>
+  <p>A customer recently assembled a custom-built desktop designed for gaming by selecting and installing individual hardware components. While the operating system successfully boots, the system consistently freezes within a few minutes of startup. The customer has now brought the machine to a technician for diagnosis and troubleshooting to identify and resolve the underlying issue.</p>
+</div>
+
+<div class="main-container">
+  <div class="button-column">
+    <button class="clickable-button" onclick="showSpecs('Liquid Cooling', 'Power: 40w')">💧 Liquid Cooling</button>
+    <button class="clickable-button" onclick="showSpecs('Power Supply', '750w<br>ATX power connector<br>ATX 12V connector<br>90% Efficiency rating<br>110V input<br>Single +12V rail')">🔌 Power Supply</button>
+    <button class="clickable-button" onclick="showSpecs('Motherboard', 'Power: 75w')">🧠 Motherboard</button>
+    <button class="clickable-button" onclick="showSpecs('Memory', '32GB<br>DDR4-2666<br>PC4-21300<br>Power: 1.2V;12W')">📏 Memory</button>
+    <button class="clickable-button" onclick="showSpecs('Video Card', '5500 compute cores<br>16x PCIe interface<br>Base clock: 1.5GHz<br>8 GB GDDR-6<br>Power: 225W')">🎮 Video Card</button>
+    <button class="clickable-button" onclick="showSpecs('Storage', '500 GB NVMe SSD<br>3.0TB SATA Hard Drive<br>PCIe3.0<br>Power: 4.3W<br>3500MB/s read/write<br>MTBF 1,500,000 hours')">💾 Storage</button>
+    <button class="clickable-button" onclick="showSpecs('CPU', 'x64 10-core<br>Base Clock: 3.2GHz<br>TDP 165W<br>Junction temperature: 94 C<br>19.25MB L1 Cache')">🖥️ CPU</button>
+  </div>
+
+  <div class="image-wrapper">
+    <img src="PC_Image.png" alt="PC Image" />
+    <div class="bios-button">
+      <button class="clickable-button" onclick="showBios()">🧾 BIOS</button>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <select id="causeSelect"></select>
+  <select id="resolutionSelect"></select><br>
+  <button onclick="submit()">Submit</button>
+  <button onclick="resetAll()">Reset All</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div id="resultDialog">
+  <h3>Results</h3>
+  <div id="resultContent"></div>
+  <button onclick="closeDialog()">Close</button>
+</div>
+
+<dialog id="specDialog"></dialog>
+<dialog id="biosDialog">
+  <div class="bios-screen">
+    Version 2.14.1219<br>
+    BIOS Date: 04/18/2025<br>
+    Press &lt;DEL&gt; to enter setup.<br>
+    Press F9 for BBS POPUP<br>
+    Press F12 for BIOS POST Flash<br><br>
+    x64 10 Core CPU Speed: 4.5 GHz<br>
+    CPU Temp: 80C<br><br>
+    Memory Frequency: DDR4 2666 MHz<br>
+    Total Memory: 32768 MB<br><br>
+    USB Devices: 1 Keyboard, 1 Mouse<br><br>
+    NVMe 500GB<br>
+    SATA6 300GB
+  </div>
+  <button onclick="biosDialog.close()">Close</button>
+</dialog>
+
+<script>
+  const causes = ["Overheating", "Component incompatibility", "Insufficient power", "Overclocking"];
+  const resolutions = [
+    "Replace PSU with higher wattage model", "Update motherboard firmware", "Install larger radiator",
+    "Lower CPU clock speed", "Increase CUP multiplier", "Run CHKDSK on NVMe drive", "Replace thermal paste",
+    "Decrease CPU voltage", "Raise memory frequency", "Switch motherboard for micro-ATX form factor",
+    "Decrease memory module frequency", "Replace GPU with lower performance model"
+  ];
+
+const correctCause = "Overclocking";
+const correctResolution = "Lower CPU clock speed";
+
+  function toggleSlideout() {
+    document.getElementById('slideout').classList.toggle('open');
+  }
+
+  function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function populateDropdowns() {
+    document.getElementById("causeSelect").innerHTML =
+      "<option>Select a cause</option>" + shuffle(causes).map(c => `<option>${c}</option>`).join('');
+    document.getElementById("resolutionSelect").innerHTML =
+      "<option>Select a resolution</option>" + shuffle(resolutions).map(r => `<option>${r}</option>`).join('');
+  }
+
+  function showSpecs(title, specs) {
+    const dialog = document.getElementById("specDialog");
+    dialog.innerHTML = `<h3>${title}</h3><p>${specs}</p><button onclick="specDialog.close()">Close</button>`;
+    dialog.showModal();
+  }
+
+  function showBios() {
+    document.getElementById("biosDialog").showModal();
+  }
+
+  function submit() {
+    const selectedCause = document.getElementById("causeSelect").value;
+    const selectedResolution = document.getElementById("resolutionSelect").value;
+    let output = "", score = 0;
+
+if (selectedCause === correctCause) {
+  output += `<p><strong>Cause:</strong> ${selectedCause} ✅<br>The CPU is listed with a base clock of 3.2GHz and a TDP of 165W, but the BIOS shows it's running at 4.5GHz. This indicates the system has been overclocked beyond its design limits, which often leads to instability and freezing during operation.</p>`;
+  score++;
+} else {
+  output += `<p><strong>Cause:</strong> ${selectedCause} ❌<br>The correct cause is <strong>${correctCause}</strong>. BIOS shows the CPU is running at 4.5GHz, while the spec lists its base clock at 3.2GHz. This overclocking introduces thermal and voltage strain, resulting in crashes or freezes.</p>`;
+}
+
+if (selectedResolution === correctResolution) {
+  output += `<p><strong>Resolution:</strong> ${selectedResolution} ✅<br>Reducing the CPU clock speed will restore it to its rated specification, which aligns with the 3.2GHz base clock in the spec sheet. This helps prevent overheating and instability caused by overclocking.</p>`;
+  score++;
+} else {
+  output += `<p><strong>Resolution:</strong> ${selectedResolution} ❌<br>The correct resolution is <strong>${correctResolution}</strong>. Lowering the CPU clock speed addresses the overclocking condition (running at 4.5GHz instead of the 3.2GHz base), which is causing the lockups.</p>`;
+}
+
+    output += `<p><strong>Score:</strong> ${score} / 2</p>`;
+    document.getElementById("resultContent").innerHTML = output;
+    document.getElementById("overlay").style.display = "block";
+    document.getElementById("resultDialog").style.display = "block";
+  }
+
+  function closeDialog() {
+    document.getElementById("overlay").style.display = "none";
+    document.getElementById("resultDialog").style.display = "none";
+  }
+
+  function resetAll() {
+    populateDropdowns();
+    closeDialog();
+  }
+
+  populateDropdowns();
+</script>
+
+</body>
+</html>

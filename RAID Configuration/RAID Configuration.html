@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RAID Configuration Challenge</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #eef2f5;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h2 { color: #2a4d69; }
+    .instructions { color: #555; margin-bottom: 20px; }
+    #layout-container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    #drive-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      width: 180px;
+      justify-content: center;
+    }
+    .drive {
+      width: 160px;
+      height: 50px;
+      background: linear-gradient(to bottom, #d8dadc 0%, #a9abad 100%);
+      border: 2px solid #888;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 6px 10px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+      font-size: 12px;
+      font-weight: bold;
+      color: #222;
+      cursor: grab;
+      position: relative;
+    }
+    .drive span { line-height: 1.2; }
+    #server-container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      background-image: url('RAID_server.png');
+      background-size: cover;
+      background-position: center;
+    }
+.bay {
+  position: absolute;
+  width: 170px;
+  height: 50px;
+  border: 2px dashed rgba(0, 0, 0, 0.3);
+  background-color: #ccc;
+  opacity: 0.6;
+  border-radius: 6px;
+}
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #1a73e8;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #145cb3; }
+    #scoreboard, #customer-desc {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>RAID Configuration Challenge</h2>
+  <div class="instructions">Drag SSDs into the bays to satisfy the customer's performance, redundancy, and storage needs.</div>
+
+  <div id="customer-desc"></div>
+
+  <div id="layout-container">
+    <div id="drive-wrapper" class="drives"></div>
+
+    <div id="server-container">
+      <div class="bay" id="bay1" style="top: 90px; left: 80px;"></div>
+      <div class="bay" id="bay2" style="top: 90px; left: 320px;"></div>
+      <div class="bay" id="bay3" style="top: 170px; left: 80px;"></div>
+      <div class="bay" id="bay4" style="top: 170px; left: 320px;"></div>
+      <div class="bay" id="bay5" style="top: 260px; left: 80px;"></div>
+      <div class="bay" id="bay6" style="top: 260px; left: 320px;"></div>
+      <div class="bay" id="bay7" style="top: 345px; left: 80px;"></div>
+      <div class="bay" id="bay8" style="top: 345px; left: 320px;"></div>
+      <div class="bay" id="bay9" style="top: 428px; left: 80px;"></div>
+      <div class="bay" id="bay10" style="top: 428px; left: 320px;"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="resetAll()">New Customer</button>
+    <button onclick="submitConfiguration()">Submit Configuration</button>
+  </div>
+
+  <div id="scoreboard"></div>
+
+  <script>
+    const RAID_FORMULAS = {
+      "RAID 0": (n, size) => n >= 2 ? n * size : 0,
+      "RAID 1": (n, size) => n >= 2 ? size : 0,
+      "RAID 5": (n, size) => n >= 3 ? (n - 1) * size : 0,
+      "RAID 10": (n, size) => (n >= 4 && n % 2 === 0) ? (n / 2) * size : 0
+    };
+
+    const RAID_MIN_DRIVES = {
+      "RAID 0": 2,
+      "RAID 1": 2,
+      "RAID 5": 3,
+      "RAID 10": 4
+    };
+
+    const speeds = ["400MB/s", "550MB/s", "600MB/s"];
+    const sizes = [1, 2]; // Only 1TB and 2TB
+
+    const CUSTOMERS = [
+  // RAID 0 (2 scenarios)
+  {
+    desc: "Post-production studio needs ultra-fast access to temporary video files during editing. No redundancy required, just performance. Requires 2TB of usable high-speed storage.",
+    raid: "RAID 0",
+    required: 2
+  },
+  {
+    desc: "High-performance computing lab requires a scratch disk for simulations. Performance is prioritized, and data loss is acceptable. At least 4TB of usable space is required.",
+    raid: "RAID 0",
+    required: 4
+  },
+
+  // RAID 1 (2 scenarios)
+  {
+    desc: "Company HR records must be mirrored in real time to prevent loss. Zero tolerance for failure. Requires 2TB of usable storage for active employee data.",
+    raid: "RAID 1",
+    required: 2
+  },
+  {
+    desc: "Executive workstation storage must always be recoverable with hot-swappable redundancy. At least 2TB of usable mirrored space is required.",
+    raid: "RAID 1",
+    required: 2
+  },
+
+  // RAID 5 (2 scenarios)
+  {
+    desc: "IT audit logs and change records need fault-tolerant storage with good read performance. Must survive one drive failure. Minimum of 3TB usable capacity required.",
+    raid: "RAID 5",
+    required: 3
+  },
+  {
+    desc: "Web content delivery server stores dynamic assets that must be available even if a drive fails. Minimum 2TB of usable storage is required with redundancy.",
+    raid: "RAID 5",
+    required: 2
+  },
+
+  // RAID 10 (2 scenarios)
+  {
+    desc: "Customer database server needs high-speed transactions and fault tolerance. Storage must continue operating through a single drive failure. At least 4TB usable space required.",
+    raid: "RAID 10",
+    required: 4
+  },
+  {
+    desc: "Online retail application server demands high throughput and immediate recovery in case of disk loss. Requires 4TB of mirrored-striped capacity.",
+    raid: "RAID 10",
+    required: 4
+  }
+];
+
+    let currentCustomer;
+
+    function resetAll() {
+      currentCustomer = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+      document.getElementById("customer-desc").textContent = `Customer Requirement: ${currentCustomer.desc}`;
+      document.getElementById("scoreboard").textContent = "";
+      generateValidDrives();
+      clearBays();
+    }
+
+    function generateValidDrives() {
+      const wrapper = document.getElementById("drive-wrapper");
+      wrapper.innerHTML = "";
+
+      const minDrives = RAID_MIN_DRIVES[currentCustomer.raid];
+      let validSet = [];
+      let chosenCap = null;
+      let chosenSpeed = null;
+
+      outer: for (let cap of sizes) {
+        for (let spd of speeds) {
+          const usable = RAID_FORMULAS[currentCustomer.raid](minDrives, cap);
+          if (usable >= currentCustomer.required) {
+            chosenCap = cap;
+            chosenSpeed = spd;
+            for (let i = 0; i < minDrives; i++) {
+              validSet.push({ id: `drive${i+1}`, cap, spd, valid: true });
+            }
+            break outer;
+          }
+        }
+      }
+
+      if (validSet.length === 0) {
+        document.getElementById("scoreboard").textContent = "Failed to generate valid drive config.";
+        return;
+      }
+
+      // Add distractors
+      while (validSet.length < 8) {
+        const randomCap = sizes[Math.floor(Math.random() * sizes.length)];
+        const randomSpd = speeds[Math.floor(Math.random() * speeds.length)];
+        const isValid = randomCap === chosenCap && randomSpd === chosenSpeed;
+        validSet.push({
+          id: `drive${validSet.length + 1}`,
+          cap: randomCap,
+          spd: randomSpd,
+          valid: isValid
+        });
+      }
+
+      validSet = validSet.sort(() => Math.random() - 0.5);
+
+      validSet.forEach((d, idx) => {
+        const div = document.createElement("div");
+        div.className = "drive";
+        div.id = d.id;
+        div.draggable = true;
+        div.dataset.capacity = d.cap;
+        div.dataset.speed = d.spd;
+        div.innerHTML = `<span>SSD ${idx + 1}</span><span>${d.cap}TB</span><span>${d.spd}</span>`;
+        div.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", d.id));
+        wrapper.appendChild(div);
+      });
+    }
+
+    function clearBays() {
+      for (let i = 1; i <= 10; i++) {
+        const bay = document.getElementById(`bay${i}`);
+        bay.innerHTML = "";
+        bay.addEventListener("dragover", e => e.preventDefault());
+        bay.addEventListener("drop", e => {
+          e.preventDefault();
+          const id = e.dataTransfer.getData("text/plain");
+          const drive = document.getElementById(id);
+          if (!bay.hasChildNodes()) {
+            drive.style.position = "static";
+            bay.appendChild(drive);
+          }
+        });
+        bay.addEventListener("click", () => {
+          if (bay.firstChild) document.getElementById("drive-wrapper").appendChild(bay.firstChild);
+        });
+      }
+    }
+
+    function submitConfiguration() {
+      const filled = Array.from(document.querySelectorAll(".bay")).filter(b => b.firstChild);
+      const drives = filled.map(b => b.firstChild);
+
+      if (drives.length < RAID_MIN_DRIVES[currentCustomer.raid]) {
+        document.getElementById("scoreboard").textContent = `Too few drives placed for ${currentCustomer.raid}.`;
+        return;
+      }
+
+      const sizes = drives.map(d => parseFloat(d.dataset.capacity));
+      const speeds = drives.map(d => d.dataset.speed);
+      const allSameSize = sizes.every(s => s === sizes[0]);
+      const allSameSpeed = speeds.every(s => s === speeds[0]);
+
+      if (!allSameSize || !allSameSpeed) {
+        document.getElementById("scoreboard").textContent = `All drives must have same capacity and speed.`;
+        return;
+      }
+
+      const usable = RAID_FORMULAS[currentCustomer.raid](drives.length, sizes[0]);
+      if (usable < currentCustomer.required) {
+        document.getElementById("scoreboard").textContent = `Usable storage is ${usable}TB. Not enough.`;
+        return;
+      }
+
+      document.getElementById("scoreboard").textContent = `Correct! ${usable}TB usable with ${drives.length} drives.`;
+    }
+
+    window.onload = resetAll;
+  </script>
+</body>
+</html>
